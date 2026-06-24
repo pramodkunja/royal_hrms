@@ -1,0 +1,49 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../features/attendance/feature_module.dart';
+import '../../features/auth/feature_module.dart';
+import '../../features/dashboard/feature_module.dart';
+import '../../features/employees/feature_module.dart';
+import '../../features/leave/feature_module.dart';
+import '../../features/notifications/feature_module.dart';
+import '../../features/payroll/feature_module.dart';
+import '../../features/reports/feature_module.dart';
+import '../../features/settings/feature_module.dart';
+import '../services/auth_status_notifier.dart';
+import 'route_guard.dart';
+import 'route_paths.dart';
+
+/// Notifies GoRouter to re-evaluate [RouteGuard.redirect] whenever the
+/// app's auth status changes, e.g. after sign-in, sign-out, or a 401.
+class _AuthRefreshListenable extends ChangeNotifier {
+  _AuthRefreshListenable(Ref ref) {
+    ref.listen<AuthStatus>(authStatusNotifierProvider, (_, _) => notifyListeners());
+  }
+}
+
+final appRouterProvider = Provider<GoRouter>((ref) {
+  final routeGuard = RouteGuard(ref);
+
+  return GoRouter(
+    initialLocation: RoutePaths.splash,
+    redirect: routeGuard.redirect,
+    refreshListenable: _AuthRefreshListenable(ref),
+    routes: [
+      GoRoute(path: RoutePaths.splash, builder: (context, state) => const SplashPage()),
+      GoRoute(path: RoutePaths.login, builder: (context, state) => const LoginPage()),
+      GoRoute(path: RoutePaths.dashboard, builder: (context, state) => const DashboardPage()),
+      GoRoute(path: RoutePaths.employees, builder: (context, state) => const EmployeesPage()),
+      GoRoute(path: RoutePaths.attendance, builder: (context, state) => const AttendancePage()),
+      GoRoute(path: RoutePaths.leave, builder: (context, state) => const LeavePage()),
+      GoRoute(path: RoutePaths.payroll, builder: (context, state) => const PayrollPage()),
+      GoRoute(path: RoutePaths.reports, builder: (context, state) => const ReportsPage()),
+      GoRoute(
+        path: RoutePaths.notifications,
+        builder: (context, state) => const NotificationsPage(),
+      ),
+      GoRoute(path: RoutePaths.settings, builder: (context, state) => const SettingsPage()),
+    ],
+  );
+});
