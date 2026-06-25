@@ -5,7 +5,9 @@ import '../../data/datasource/reports_remote_datasource.dart';
 import '../../data/repositories/reports_repository_impl.dart';
 import '../../domain/repositories/reports_repository.dart';
 
-final reportsRemoteDataSourceProvider = Provider<ReportsRemoteDataSource>((ref) {
+final reportsRemoteDataSourceProvider = Provider<ReportsRemoteDataSource>((
+  ref,
+) {
   return ReportsRemoteDataSourceImpl(ref.watch(apiClientProvider));
 });
 

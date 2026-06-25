@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../constants/api_constants.dart';
+import '../errors/exceptions.dart';
 import '../services/auth_status_notifier.dart';
 import '../services/logger_service.dart';
 import '../storage/token_storage_service.dart';
@@ -33,7 +34,10 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) {
-    return _dio.get<T>(path, queryParameters: queryParameters, options: options);
+    return _guard(
+      () =>
+          _dio.get<T>(path, queryParameters: queryParameters, options: options),
+    );
   }
 
   Future<Response<T>> post<T>(
@@ -42,7 +46,14 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) {
-    return _dio.post<T>(path, data: data, queryParameters: queryParameters, options: options);
+    return _guard(
+      () => _dio.post<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      ),
+    );
   }
 
   Future<Response<T>> put<T>(
@@ -51,7 +62,14 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) {
-    return _dio.put<T>(path, data: data, queryParameters: queryParameters, options: options);
+    return _guard(
+      () => _dio.put<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      ),
+    );
   }
 
   Future<Response<T>> patch<T>(
@@ -60,7 +78,14 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) {
-    return _dio.patch<T>(path, data: data, queryParameters: queryParameters, options: options);
+    return _guard(
+      () => _dio.patch<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      ),
+    );
   }
 
   Future<Response<T>> delete<T>(
@@ -69,7 +94,28 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) {
-    return _dio.delete<T>(path, data: data, queryParameters: queryParameters, options: options);
+    return _guard(
+      () => _dio.delete<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      ),
+    );
+  }
+
+  /// Routes every request through here so callers only ever see
+  /// [AppException] (see core/errors/exceptions.dart) and never a raw
+  /// [DioException], per the project's error-handling standard.
+  Future<Response<T>> _guard<T>(Future<Response<T>> Function() request) async {
+    try {
+      return await request();
+    } on DioException catch (error) {
+      final mapped = error.error;
+      throw mapped is AppException
+          ? mapped
+          : mapDioExceptionToAppException(error);
+    }
   }
 }
 
@@ -87,7 +133,8 @@ final dioProvider = Provider<Dio>((ref) {
       tokenStorageService: ref.watch(tokenStorageServiceProvider),
       refreshDio: ref.watch(refreshDioProvider),
       retryDio: dio,
-      onSessionExpired: () => ref.read(authStatusNotifierProvider.notifier).setUnauthenticated(),
+      onSessionExpired: () =>
+          ref.read(authStatusNotifierProvider.notifier).setUnauthenticated(),
     ),
     ResponseInterceptor(logger),
     ErrorInterceptor(logger),
@@ -96,4 +143,6 @@ final dioProvider = Provider<Dio>((ref) {
   return dio;
 });
 
-final apiClientProvider = Provider<ApiClient>((ref) => ApiClient(ref.watch(dioProvider)));
+final apiClientProvider = Provider<ApiClient>(
+  (ref) => ApiClient(ref.watch(dioProvider)),
+);

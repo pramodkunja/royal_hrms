@@ -11,7 +11,13 @@ _UserSessionModel _$UserSessionModelFromJson(Map<String, dynamic> json) =>
       userId: json['userId'] as String,
       name: json['name'] as String,
       email: json['email'] as String,
-      role: $enumDecode(_$UserRoleEnumMap, json['role']),
+      role: json['role'] as String,
+      roleDisplay: json['roleDisplay'] as String,
+      permissions:
+          (json['permissions'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const <String>[],
     );
 
 Map<String, dynamic> _$UserSessionModelToJson(_UserSessionModel instance) =>
@@ -19,12 +25,7 @@ Map<String, dynamic> _$UserSessionModelToJson(_UserSessionModel instance) =>
       'userId': instance.userId,
       'name': instance.name,
       'email': instance.email,
-      'role': _$UserRoleEnumMap[instance.role]!,
+      'role': instance.role,
+      'roleDisplay': instance.roleDisplay,
+      'permissions': instance.permissions,
     };
-
-const _$UserRoleEnumMap = {
-  UserRole.admin: 'admin',
-  UserRole.hr: 'hr',
-  UserRole.manager: 'manager',
-  UserRole.employee: 'employee',
-};

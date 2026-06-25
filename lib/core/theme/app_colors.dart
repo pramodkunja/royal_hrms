@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 class AppColors {
   const AppColors._();
 
-  static const Color primary = Color(0xFF1B5E20);
-  static const Color primaryLight = Color(0xFF4C8C4A);
-  static const Color primaryDark = Color(0xFF003300);
+  static const Color primary = Color(0xFF2F4B7C);
+  static const Color primaryLight = Color(0xFF5B7CAE);
+  static const Color primaryDark = Color(0xFF1E3358);
 
   static const Color secondary = Color(0xFFFFB300);
   static const Color secondaryLight = Color(0xFFFFE54C);
@@ -19,13 +19,17 @@ class AppColors {
   static const Color error = Color(0xFFC62828);
   static const Color info = Color(0xFF0277BD);
 
-  static const Color lightBackground = Color(0xFFF7F8FA);
+  static const Color lightBackground = Color(0xFFF4F6FB);
   static const Color lightSurface = Color(0xFFFFFFFF);
-  static const Color lightOnSurface = Color(0xFF1A1C1E);
-  static const Color lightBorder = Color(0xFFE0E2E5);
+  static const Color lightFieldFill = Color(0xFFEEF1F8);
+  static const Color lightOnSurface = Color(0xFF1A2233);
+  static const Color lightTextMuted = Color(0xFF5B6478);
+  static const Color lightBorder = Color(0xFFDCE1ED);
 
-  static const Color darkBackground = Color(0xFF121212);
-  static const Color darkSurface = Color(0xFF1E1E1E);
-  static const Color darkOnSurface = Color(0xFFE3E3E3);
-  static const Color darkBorder = Color(0xFF333333);
+  static const Color darkBackground = Color(0xFF10131C);
+  static const Color darkSurface = Color(0xFF1B2030);
+  static const Color darkFieldFill = Color(0xFF242A3C);
+  static const Color darkOnSurface = Color(0xFFE7EAF2);
+  static const Color darkTextMuted = Color(0xFFA4ACC2);
+  static const Color darkBorder = Color(0xFF333B52);
 }

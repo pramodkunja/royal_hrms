@@ -5,7 +5,9 @@ import '../../data/datasource/settings_remote_datasource.dart';
 import '../../data/repositories/settings_repository_impl.dart';
 import '../../domain/repositories/settings_repository.dart';
 
-final settingsRemoteDataSourceProvider = Provider<SettingsRemoteDataSource>((ref) {
+final settingsRemoteDataSourceProvider = Provider<SettingsRemoteDataSource>((
+  ref,
+) {
   return SettingsRemoteDataSourceImpl(ref.watch(apiClientProvider));
 });
 

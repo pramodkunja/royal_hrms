@@ -6,7 +6,8 @@ part 'failures.freezed.dart';
 
 @freezed
 sealed class Failure with _$Failure {
-  const factory Failure.server(String message, {int? statusCode}) = ServerFailure;
+  const factory Failure.server(String message, {int? statusCode}) =
+      ServerFailure;
   const factory Failure.network(String message) = NetworkFailure;
   const factory Failure.unauthorized(String message) = UnauthorizedFailure;
   const factory Failure.validation(
@@ -19,7 +20,10 @@ sealed class Failure with _$Failure {
   factory Failure.fromException(AppException exception) {
     switch (exception) {
       case ApiException():
-        return Failure.server(exception.message, statusCode: exception.statusCode);
+        return Failure.server(
+          exception.message,
+          statusCode: exception.statusCode,
+        );
       case NetworkException():
         return Failure.network(exception.message);
       case RequestTimeoutException():

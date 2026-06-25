@@ -66,12 +66,13 @@ AppException mapDioExceptionToAppException(DioException error) {
 AppException _mapBadResponse(DioException error) {
   final statusCode = error.response?.statusCode;
   final data = error.response?.data;
-  final message = _extractMessage(data) ?? 'Something went wrong. Please try again.';
+  final message =
+      _extractMessage(data) ?? 'Something went wrong. Please try again.';
 
   if (statusCode == 401) {
     return UnauthorizedException(message);
   }
-  if (statusCode == 422) {
+  if (statusCode == 400 || statusCode == 422) {
     return ValidationException(message, errors: _extractValidationErrors(data));
   }
   return ApiException(
@@ -81,20 +82,50 @@ AppException _mapBadResponse(DioException error) {
   );
 }
 
+/// Backends vary in how they shape error bodies. This checks, in order:
+/// a custom `{"message": "..."}` envelope, DRF's default
+/// `{"detail": "..."}`, then falls back to the first string (or first
+/// item of a string list) found anywhere in the body — covering DRF's
+/// flat serializer-validation shape `{"email": ["This field is required."]}`.
 String? _extractMessage(dynamic data) {
-  if (data is Map<String, dynamic>) {
-    final message = data['message'];
-    if (message is String) return message;
+  if (data is! Map<String, dynamic>) return null;
+
+  final message = data['message'];
+  if (message is String && message.isNotEmpty) return message;
+
+  final detail = data['detail'];
+  if (detail is String && detail.isNotEmpty) return detail;
+
+  for (final value in data.values) {
+    if (value is String && value.isNotEmpty) return value;
+    if (value is List && value.isNotEmpty && value.first is String) {
+      return value.first as String;
+    }
   }
   return null;
 }
 
+/// Reads field-level validation errors from either a custom envelope
+/// (`{"data": {"email": [...]}}`) or DRF's flat shape
+/// (`{"email": [...]}` with no envelope wrapper at all).
 Map<String, List<String>>? _extractValidationErrors(dynamic data) {
-  if (data is Map<String, dynamic> && data['errors'] is Map<String, dynamic>) {
-    final rawErrors = data['errors'] as Map<String, dynamic>;
-    return rawErrors.map(
-      (key, value) => MapEntry(key, value is List ? value.cast<String>() : <String>[]),
-    );
-  }
-  return null;
+  if (data is! Map<String, dynamic>) return null;
+
+  final nested = data['data'];
+  final isEnvelope = data.containsKey('status') || data.containsKey('message');
+  final source = nested is Map<String, dynamic>
+      ? nested
+      : (isEnvelope ? null : data);
+  if (source == null) return null;
+
+  final errors = <String, List<String>>{};
+  source.forEach((key, value) {
+    if (value is List) {
+      final strings = value.whereType<String>().toList();
+      if (strings.isNotEmpty) errors[key] = strings;
+    } else if (value is String) {
+      errors[key] = [value];
+    }
+  });
+  return errors.isEmpty ? null : errors;
 }

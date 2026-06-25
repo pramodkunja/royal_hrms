@@ -5,7 +5,9 @@ import '../../data/datasource/employees_remote_datasource.dart';
 import '../../data/repositories/employees_repository_impl.dart';
 import '../../domain/repositories/employees_repository.dart';
 
-final employeesRemoteDataSourceProvider = Provider<EmployeesRemoteDataSource>((ref) {
+final employeesRemoteDataSourceProvider = Provider<EmployeesRemoteDataSource>((
+  ref,
+) {
   return EmployeesRemoteDataSourceImpl(ref.watch(apiClientProvider));
 });
 

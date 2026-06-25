@@ -15,8 +15,14 @@ class TokenStorageService {
     required String accessToken,
     required String refreshToken,
   }) async {
-    await _secureStorageService.write(key: StorageKeys.accessToken, value: accessToken);
-    await _secureStorageService.write(key: StorageKeys.refreshToken, value: refreshToken);
+    await _secureStorageService.write(
+      key: StorageKeys.accessToken,
+      value: accessToken,
+    );
+    await _secureStorageService.write(
+      key: StorageKeys.refreshToken,
+      value: refreshToken,
+    );
   }
 
   Future<String?> getAccessToken() {

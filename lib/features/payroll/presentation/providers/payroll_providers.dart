@@ -5,7 +5,9 @@ import '../../data/datasource/payroll_remote_datasource.dart';
 import '../../data/repositories/payroll_repository_impl.dart';
 import '../../domain/repositories/payroll_repository.dart';
 
-final payrollRemoteDataSourceProvider = Provider<PayrollRemoteDataSource>((ref) {
+final payrollRemoteDataSourceProvider = Provider<PayrollRemoteDataSource>((
+  ref,
+) {
   return PayrollRemoteDataSourceImpl(ref.watch(apiClientProvider));
 });
 

@@ -3,6 +3,41 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_typography.dart';
 
+const double _fieldRadius = 14;
+const double _buttonRadius = 14;
+const double _buttonHeight = 52;
+const double _cardRadius = 24;
+
+OutlineInputBorder _fieldBorder(Color color) {
+  return OutlineInputBorder(
+    borderRadius: BorderRadius.circular(_fieldRadius),
+    borderSide: BorderSide(color: color),
+  );
+}
+
+CardThemeData _cardTheme(Color color) {
+  return CardThemeData(
+    color: color,
+    elevation: 8,
+    shadowColor: Colors.black.withValues(alpha: 0.12),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(_cardRadius),
+    ),
+  );
+}
+
+FilledButtonThemeData _filledButtonTheme() {
+  return FilledButtonThemeData(
+    style: FilledButton.styleFrom(
+      minimumSize: const Size.fromHeight(_buttonHeight),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_buttonRadius),
+      ),
+      textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+    ),
+  );
+}
+
 class AppTheme {
   const AppTheme._();
 
@@ -13,6 +48,7 @@ class AppTheme {
       error: AppColors.error,
       surface: AppColors.lightSurface,
       onSurface: AppColors.lightOnSurface,
+      onSurfaceVariant: AppColors.lightTextMuted,
     );
 
     return ThemeData(
@@ -28,12 +64,21 @@ class AppTheme {
         centerTitle: true,
       ),
       dividerColor: AppColors.lightBorder,
-      cardTheme: const CardThemeData(color: AppColors.lightSurface, elevation: 1),
-      inputDecorationTheme: const InputDecorationTheme(
+      cardTheme: _cardTheme(AppColors.lightSurface),
+      inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.lightSurface,
-        border: OutlineInputBorder(borderSide: BorderSide(color: AppColors.lightBorder)),
+        fillColor: AppColors.lightFieldFill,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        border: _fieldBorder(AppColors.lightBorder),
+        enabledBorder: _fieldBorder(AppColors.lightBorder),
+        focusedBorder: _fieldBorder(AppColors.primary),
+        errorBorder: _fieldBorder(AppColors.error),
+        focusedErrorBorder: _fieldBorder(AppColors.error),
       ),
+      filledButtonTheme: _filledButtonTheme(),
     );
   }
 
@@ -44,6 +89,7 @@ class AppTheme {
       error: AppColors.error,
       surface: AppColors.darkSurface,
       onSurface: AppColors.darkOnSurface,
+      onSurfaceVariant: AppColors.darkTextMuted,
     );
 
     return ThemeData(
@@ -59,12 +105,21 @@ class AppTheme {
         centerTitle: true,
       ),
       dividerColor: AppColors.darkBorder,
-      cardTheme: const CardThemeData(color: AppColors.darkSurface, elevation: 1),
-      inputDecorationTheme: const InputDecorationTheme(
+      cardTheme: _cardTheme(AppColors.darkSurface),
+      inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.darkSurface,
-        border: OutlineInputBorder(borderSide: BorderSide(color: AppColors.darkBorder)),
+        fillColor: AppColors.darkFieldFill,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        border: _fieldBorder(AppColors.darkBorder),
+        enabledBorder: _fieldBorder(AppColors.darkBorder),
+        focusedBorder: _fieldBorder(AppColors.primaryLight),
+        errorBorder: _fieldBorder(AppColors.error),
+        focusedErrorBorder: _fieldBorder(AppColors.error),
       ),
+      filledButtonTheme: _filledButtonTheme(),
     );
   }
 }

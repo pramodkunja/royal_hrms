@@ -8,7 +8,10 @@ class ResponseInterceptor extends Interceptor {
   final LoggerService _logger;
 
   @override
-  void onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) {
+  void onResponse(
+    Response<dynamic> response,
+    ResponseInterceptorHandler handler,
+  ) {
     _logger.debug(
       '<-- ${response.statusCode} ${response.requestOptions.uri}\n'
       'Body: ${response.data}',
