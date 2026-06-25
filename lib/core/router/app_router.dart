@@ -104,6 +104,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SmtpSettingsPage(),
       ),
       GoRoute(
+        path: RoutePaths.settingsEmailTemplates,
+        builder: (context, state) => const EmailTemplatesPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.settingsDepartments,
+        builder: (context, state) => const DepartmentsPage(),
+      ),
+      GoRoute(
         path: RoutePaths.recruitment,
         builder: (context, state) => const RecruitmentPage(),
       ),

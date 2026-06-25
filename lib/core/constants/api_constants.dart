@@ -25,4 +25,12 @@ class ApiConstants {
 
   // SMTP settings endpoints
   static const String smtpConfigsEndpoint = '/settings/smtp/';
+
+  // Settings — Email Templates
+  static const String settingsEmailTemplatesEndpoint =
+      '/settings/email-templates/';
+
+  // Departments & Designations
+  static const String settingsDepartmentsEndpoint = '/departments/';
+  static const String settingsDesignationsEndpoint = '/designations/';
 }

@@ -28,4 +28,6 @@ class RoutePaths {
   static const String myRequests = '/my-requests';
   static const String myProfile = '/my-profile';
   static const String smtpSettings = '/settings/smtp';
+  static const String settingsEmailTemplates = '/settings/email-templates';
+  static const String settingsDepartments = '/settings/departments';
 }

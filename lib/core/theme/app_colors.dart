@@ -33,4 +33,12 @@ class AppColors {
   static const Color darkOnSurface = Color(0xFFE7EAF2);
   static const Color darkTextMuted = Color(0xFFA4ACC2);
   static const Color darkBorder = Color(0xFF333B52);
+
+  static const Color emailCategoryDocument = Color(0xFF1A5276);
+  static const Color emailCategoryNotification = Color(0xFF167B70);
+  static const Color emailCategoryReminder = Color(0xFFBF7A20);
+  static const Color emailCategoryWish = Color(0xFF2D7A42);
+
+  /// Background fill for {VARIABLE} badges in the email template live preview.
+  static const Color emailVarBadgeFill = Color(0xFFFFF3E0);
 }
