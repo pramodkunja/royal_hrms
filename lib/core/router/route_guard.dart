@@ -44,6 +44,16 @@ class RouteGuard {
     RoutePaths.announcements: [AppPermissions.viewAnnouncements],
     RoutePaths.documents: [AppPermissions.viewDocuments],
     RoutePaths.audit: [AppPermissions.viewAudit],
+    RoutePaths.orgChart: [AppPermissions.viewEmployees],
+    RoutePaths.branches: [AppPermissions.viewEmployees],
+    RoutePaths.approvals: [
+      AppPermissions.approveEmployees,
+      AppPermissions.approveLeave,
+      AppPermissions.approveExpenses,
+    ],
+    RoutePaths.separation: [AppPermissions.approveEmployees],
+    // myPayslips, myRequests, myProfile are intentionally absent — they're
+    // self-service pages any authenticated user may open.
   };
 
   FutureOr<String?> redirect(BuildContext context, GoRouterState state) async {

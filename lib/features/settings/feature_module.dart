@@ -1,5 +1,13 @@
 export 'data/datasource/settings_remote_datasource.dart';
+export 'data/models/smtp_config_model.dart';
+export 'data/models/smtp_config_request_model.dart';
 export 'data/repositories/settings_repository_impl.dart';
+export 'domain/entities/smtp_config.dart';
 export 'domain/repositories/settings_repository.dart';
 export 'presentation/pages/settings_page.dart';
+export 'presentation/pages/smtp_settings_page.dart';
 export 'presentation/providers/settings_providers.dart';
+export 'presentation/providers/smtp_form_state.dart';
+export 'presentation/providers/smtp_settings_notifier.dart';
+export 'presentation/widgets/smtp_config_card.dart';
+export 'presentation/widgets/smtp_form_dialog.dart';

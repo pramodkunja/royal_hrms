@@ -29,81 +29,101 @@ class _MenuSection {
 }
 
 const List<_MenuSection> _sections = [
-  _MenuSection('Overview', [
+  _MenuSection('Main', [
     _MenuItem(
       icon: Icons.dashboard_outlined,
       label: 'Dashboard',
       path: RoutePaths.dashboard,
     ),
+    _MenuItem(
+      icon: Icons.campaign_outlined,
+      label: 'Announcements',
+      path: RoutePaths.announcements,
+    ),
   ]),
   _MenuSection('Workforce', [
     _MenuItem(
-      icon: Icons.groups_outlined,
+      icon: Icons.badge_outlined,
       label: 'Employees',
       path: RoutePaths.employees,
     ),
     _MenuItem(
-      icon: Icons.fingerprint,
+      icon: Icons.account_tree_outlined,
+      label: 'Org Chart',
+      path: RoutePaths.orgChart,
+    ),
+    _MenuItem(
+      icon: Icons.apartment_outlined,
+      label: 'Branches',
+      path: RoutePaths.branches,
+    ),
+  ]),
+  _MenuSection('Time & Pay', [
+    _MenuItem(
+      icon: Icons.access_time_outlined,
       label: 'Attendance',
       path: RoutePaths.attendance,
     ),
-    _MenuItem(
-      icon: Icons.beach_access_outlined,
-      label: 'Leave',
-      path: RoutePaths.leave,
-    ),
-    _MenuItem(
-      icon: Icons.person_search_outlined,
-      label: 'Recruitment',
-      path: RoutePaths.recruitment,
-    ),
-  ]),
-  _MenuSection('Finance', [
     _MenuItem(
       icon: Icons.payments_outlined,
       label: 'Payroll',
       path: RoutePaths.payroll,
     ),
     _MenuItem(
-      icon: Icons.receipt_long_outlined,
+      icon: Icons.receipt_outlined,
+      label: 'My Payslips',
+      path: RoutePaths.myPayslips,
+    ),
+    _MenuItem(
+      icon: Icons.beach_access_outlined,
+      label: 'Leave Management',
+      path: RoutePaths.leave,
+    ),
+    _MenuItem(
+      icon: Icons.account_balance_wallet_outlined,
       label: 'Expenses',
       path: RoutePaths.expenses,
     ),
   ]),
-  _MenuSection('Engagement', [
+  _MenuSection('HR Ops', [
     _MenuItem(
-      icon: Icons.campaign_outlined,
-      label: 'Announcements',
-      path: RoutePaths.announcements,
+      icon: Icons.task_alt_outlined,
+      label: 'Approvals',
+      path: RoutePaths.approvals,
     ),
     _MenuItem(
-      icon: Icons.share_outlined,
-      label: 'Referrals',
-      path: RoutePaths.referrals,
+      icon: Icons.logout_outlined,
+      label: 'Separation & FnF',
+      path: RoutePaths.separation,
+    ),
+    _MenuItem(
+      icon: Icons.folder_outlined,
+      label: 'Document Center',
+      path: RoutePaths.documents,
     ),
   ]),
-  _MenuSection('Insights', [
+  _MenuSection('My', [
+    _MenuItem(
+      icon: Icons.inbox_outlined,
+      label: 'My Requests',
+      path: RoutePaths.myRequests,
+    ),
+    _MenuItem(
+      icon: Icons.account_circle_outlined,
+      label: 'My Profile',
+      path: RoutePaths.myProfile,
+    ),
+  ]),
+  _MenuSection('System', [
     _MenuItem(
       icon: Icons.bar_chart_outlined,
       label: 'Reports',
       path: RoutePaths.reports,
     ),
     _MenuItem(
-      icon: Icons.fact_check_outlined,
+      icon: Icons.shield_outlined,
       label: 'Audit Log',
       path: RoutePaths.audit,
-    ),
-  ]),
-  _MenuSection('General', [
-    _MenuItem(
-      icon: Icons.folder_outlined,
-      label: 'Documents',
-      path: RoutePaths.documents,
-    ),
-    _MenuItem(
-      icon: Icons.notifications_outlined,
-      label: 'Notifications',
-      path: RoutePaths.notifications,
     ),
     _MenuItem(
       icon: Icons.settings_outlined,
@@ -140,12 +160,26 @@ class AppNavDrawer extends ConsumerWidget {
 
     return Drawer(
       child: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.zero,
+        child: Column(
           children: [
-            _DrawerHeader(session: session),
-            for (final section in _sections)
-              ..._buildSection(context, section, currentPath, permissions),
+            const _DrawerTopBar(),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.only(bottom: 8),
+                children: [
+                  for (final section in _sections)
+                    ..._buildSection(
+                      context,
+                      section,
+                      currentPath,
+                      permissions,
+                    ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            _DrawerFooter(session: session),
           ],
         ),
       ),
@@ -169,6 +203,7 @@ class AppNavDrawer extends ConsumerWidget {
           style: context.textTheme.labelSmall?.copyWith(
             color: context.colorScheme.onSurfaceVariant,
             letterSpacing: 0.6,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
@@ -188,96 +223,63 @@ class AppNavDrawer extends ConsumerWidget {
   }
 }
 
-class _DrawerHeader extends StatelessWidget {
-  const _DrawerHeader({required this.session});
+class _DrawerTopBar extends StatelessWidget {
+  const _DrawerTopBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              AppConstants.appName,
+              style: context.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.menu_open),
+            tooltip: 'Close menu',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DrawerFooter extends StatelessWidget {
+  const _DrawerFooter({required this.session});
 
   final UserSessionModel? session;
-
-  static String _initialsOf(String name) {
-    final parts = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((p) => p.isNotEmpty)
-        .toList();
-    if (parts.isEmpty) return '?';
-    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
-    return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
-        .toUpperCase();
-  }
 
   @override
   Widget build(BuildContext context) {
     final session = this.session;
+    if (session == null) return const SizedBox.shrink();
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-      color: context.colorScheme.primary,
-      child: session == null
-          ? Text(
-              AppConstants.appName,
-              style: context.textTheme.titleLarge?.copyWith(
-                color: Colors.white,
-              ),
-            )
-          : Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.white.withValues(alpha: 0.2),
-                  child: Text(
-                    _initialsOf(session.name),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        session.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        session.email,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.85),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          session.roleDisplay,
-                          style: context.textTheme.labelSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            session.roleDisplay,
+            style: context.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
+          ),
+          Text(
+            session.role,
+            style: context.textTheme.bodySmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/router/route_paths.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/extensions.dart';
@@ -69,12 +70,14 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
     if (resetState.isComplete) {
       return AuthScaffold(
         subtitle: 'Sign in to your Royal HRMS account',
+        backgroundImagePath: AppAssets.loginBackground,
         child: _ResetPasswordSuccess(onBackToSignIn: _backToSignIn),
       );
     }
 
     return AuthScaffold(
       subtitle: 'Sign in to your Royal HRMS account',
+      backgroundImagePath: AppAssets.loginBackground,
       child: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,

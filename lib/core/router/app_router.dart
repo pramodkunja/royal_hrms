@@ -3,19 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/announcements/feature_module.dart';
+import '../../features/approvals/feature_module.dart';
 import '../../features/attendance/feature_module.dart';
 import '../../features/audit/feature_module.dart';
 import '../../features/auth/feature_module.dart';
+import '../../features/branches/feature_module.dart';
 import '../../features/dashboard/feature_module.dart';
 import '../../features/documents/feature_module.dart';
 import '../../features/employees/feature_module.dart';
 import '../../features/expenses/feature_module.dart';
 import '../../features/leave/feature_module.dart';
+import '../../features/my_profile/feature_module.dart';
+import '../../features/my_requests/feature_module.dart';
 import '../../features/notifications/feature_module.dart';
+import '../../features/org_chart/feature_module.dart';
 import '../../features/payroll/feature_module.dart';
+import '../../features/payslips/feature_module.dart';
 import '../../features/recruitment/feature_module.dart';
 import '../../features/referrals/feature_module.dart';
 import '../../features/reports/feature_module.dart';
+import '../../features/separation/feature_module.dart';
 import '../../features/settings/feature_module.dart';
 import '../services/auth_status_notifier.dart';
 import 'route_guard.dart';
@@ -93,6 +100,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SettingsPage(),
       ),
       GoRoute(
+        path: RoutePaths.smtpSettings,
+        builder: (context, state) => const SmtpSettingsPage(),
+      ),
+      GoRoute(
         path: RoutePaths.recruitment,
         builder: (context, state) => const RecruitmentPage(),
       ),
@@ -115,6 +126,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.audit,
         builder: (context, state) => const AuditPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.orgChart,
+        builder: (context, state) => const OrgChartPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.branches,
+        builder: (context, state) => const BranchesPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.myPayslips,
+        builder: (context, state) => const PayslipsPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.approvals,
+        builder: (context, state) => const ApprovalsPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.separation,
+        builder: (context, state) => const SeparationPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.myRequests,
+        builder: (context, state) => const MyRequestsPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.myProfile,
+        builder: (context, state) => const MyProfilePage(),
       ),
     ],
   );

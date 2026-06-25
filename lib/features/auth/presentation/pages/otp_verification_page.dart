@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/router/route_paths.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/validators.dart';
@@ -77,6 +78,7 @@ class _OtpVerificationPageState extends ConsumerState<OtpVerificationPage> {
 
     return AuthScaffold(
       subtitle: 'Sign in to your Royal HRMS account',
+      backgroundImagePath: AppAssets.loginBackground,
       child: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,

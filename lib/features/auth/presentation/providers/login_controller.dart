@@ -46,6 +46,12 @@ class LoginController extends Notifier<LoginState> {
           );
 
       ref.read(authStatusNotifierProvider.notifier).setAuthenticated();
+      // Force a re-fetch even if auth status was already `authenticated`
+      // (e.g. re-logging in as a different user without an intervening
+      // logout) — ref.watch alone only refires on a state *change*, so
+      // without this the drawer could keep showing the previous
+      // session's permissions.
+      ref.invalidate(currentUserSessionProvider);
       state = const LoginState(status: LoginStatus.success);
     } on AppException catch (exception) {
       state = LoginState(

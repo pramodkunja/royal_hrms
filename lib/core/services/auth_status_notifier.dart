@@ -56,6 +56,10 @@ class AuthStatusNotifier extends Notifier<AuthStatus> {
     await ref.read(tokenStorageServiceProvider).clearTokens();
     await ref.read(userSessionServiceProvider).clearSession();
     state = AuthStatus.unauthenticated;
+    // Same reasoning as in LoginController.submit(): don't rely solely
+    // on the state change to refresh dependents, in case this is called
+    // twice in a row without an intervening sign-in.
+    ref.invalidate(currentUserSessionProvider);
   }
 }
 

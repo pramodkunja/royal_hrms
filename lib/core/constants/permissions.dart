@@ -16,4 +16,7 @@ class AppPermissions {
   static const String viewAnnouncements = 'announcements.view';
   static const String viewDocuments = 'documents.view';
   static const String viewAudit = 'audit.view';
+  static const String approveEmployees = 'employees.approve';
+  static const String approveLeave = 'leave.approve';
+  static const String approveExpenses = 'expenses.approve';
 }

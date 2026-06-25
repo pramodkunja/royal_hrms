@@ -20,4 +20,12 @@ class RoutePaths {
   static const String announcements = '/announcements';
   static const String documents = '/documents';
   static const String audit = '/audit';
+  static const String orgChart = '/org-chart';
+  static const String branches = '/branches';
+  static const String myPayslips = '/my-payslips';
+  static const String approvals = '/approvals';
+  static const String separation = '/separation';
+  static const String myRequests = '/my-requests';
+  static const String myProfile = '/my-profile';
+  static const String smtpSettings = '/settings/smtp';
 }
