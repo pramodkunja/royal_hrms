@@ -20,4 +20,6 @@ class RoutePaths {
   static const String announcements = '/announcements';
   static const String documents = '/documents';
   static const String audit = '/audit';
+  static const String settingsEmailTemplates = '/settings/email-templates';
+  static const String settingsDepartments = '/settings/departments';
 }

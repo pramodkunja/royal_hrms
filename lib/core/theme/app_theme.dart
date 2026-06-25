@@ -33,7 +33,11 @@ FilledButtonThemeData _filledButtonTheme() {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(_buttonRadius),
       ),
-      textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+      textStyle: const TextStyle(
+        fontFamily: AppTypography.fontFamily,
+        fontWeight: FontWeight.w600,
+        fontSize: 16,
+      ),
     ),
   );
 }
@@ -54,6 +58,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      fontFamily: AppTypography.fontFamily,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.lightBackground,
       textTheme: AppTypography.textTheme(AppColors.lightOnSurface),
@@ -62,6 +67,12 @@ class AppTheme {
         foregroundColor: AppColors.lightOnSurface,
         elevation: 0,
         centerTitle: true,
+        titleTextStyle: TextStyle(
+          fontFamily: AppTypography.fontFamily,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: AppColors.lightOnSurface,
+        ),
       ),
       dividerColor: AppColors.lightBorder,
       cardTheme: _cardTheme(AppColors.lightSurface),
@@ -95,6 +106,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      fontFamily: AppTypography.fontFamily,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.darkBackground,
       textTheme: AppTypography.textTheme(AppColors.darkOnSurface),
@@ -103,6 +115,12 @@ class AppTheme {
         foregroundColor: AppColors.darkOnSurface,
         elevation: 0,
         centerTitle: true,
+        titleTextStyle: TextStyle(
+          fontFamily: AppTypography.fontFamily,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkOnSurface,
+        ),
       ),
       dividerColor: AppColors.darkBorder,
       cardTheme: _cardTheme(AppColors.darkSurface),

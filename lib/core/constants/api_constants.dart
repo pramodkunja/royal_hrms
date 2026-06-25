@@ -1,7 +1,7 @@
 class ApiConstants {
   const ApiConstants._();
 
-  static const String baseUrl = 'http://192.168.0.149:7000/api';
+  static const String baseUrl = 'http://192.168.0.149:9000/api';
 
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
@@ -22,4 +22,12 @@ class ApiConstants {
   /// flow is wired but will fail safely (forcing logout) until this is
   /// updated to the real path.
   static const String refreshTokenEndpoint = '/token/refresh/';
+
+  // Settings — Email Templates
+  static const String settingsEmailTemplatesEndpoint =
+      '/settings/email-templates/';
+
+  // Departments & Designations
+  static const String settingsDepartmentsEndpoint = '/departments/';
+  static const String settingsDesignationsEndpoint = '/designations/';
 }
