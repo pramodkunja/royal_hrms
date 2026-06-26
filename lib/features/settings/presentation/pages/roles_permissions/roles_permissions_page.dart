@@ -5,23 +5,21 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../widgets/roles_permissions/add_role_dialog.dart';
 import '../../widgets/roles_permissions/permissions_desktop_table.dart';
-import '../../widgets/roles_permissions/permissions_mobile_cards.dart';
 import '../../widgets/roles_permissions/roles_list_table.dart';
 
 class RolesPermissionsPage extends StatelessWidget {
   const RolesPermissionsPage({super.key});
 
-  void _openAddRole(BuildContext context) {
-    showDialog(context: context, builder: (_) => const AddRoleDialog());
-  }
+  void _openAddRole(BuildContext context) =>
+      showDialog(context: context, builder: (_) => const AddRoleDialog());
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isMobile = MediaQuery.sizeOf(context).width < 700;
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isMobile = screenW < 700;
     final scaffoldBg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
     final surfaceBg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -33,10 +31,8 @@ class RolesPermissionsPage extends StatelessWidget {
                 icon: const Icon(Icons.arrow_back_rounded),
                 onPressed: () => context.pop(),
               ),
-              title: Text(
-                'Roles & Permissions',
-                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
+              title: Text('Roles & Permissions',
+                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
               actions: [
                 Center(
                   child: Padding(
@@ -44,7 +40,8 @@ class RolesPermissionsPage extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: () => _openAddRole(context),
                       icon: const Icon(Icons.add_rounded, size: 16),
-                      label: Text('Add Role', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                      label: Text('Add Role',
+                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -57,77 +54,78 @@ class RolesPermissionsPage extends StatelessWidget {
             )
           : null,
       body: ListView(
-        padding: EdgeInsets.fromLTRB(isMobile ? 16 : 24, 0, isMobile ? 16 : 24, 32),
+        padding: EdgeInsets.fromLTRB(
+            isMobile ? 16 : 28, isMobile ? 16 : 0, isMobile ? 16 : 28, 32),
         children: [
-          if (!isMobile) _DesktopHeader(surfaceBg: surfaceBg, borderColor: borderColor, isDark: isDark, onAddRole: () => _openAddRole(context)),
+          if (!isMobile) _DesktopPageHeader(isDark: isDark, onAddRole: () => _openAddRole(context)),
           const SizedBox(height: 20),
           const RolesListSection(),
           const SizedBox(height: 20),
-          if (isMobile) const PermissionsMobileCards() else const PermissionsDesktopTable(),
+          if (isMobile)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(width: screenW < 500 ? 640 : screenW - 32, child: const PermissionsDesktopTable()),
+            )
+          else
+            const PermissionsDesktopTable(),
+          const SizedBox(height: 8),
         ],
       ),
     );
   }
 }
 
-class _DesktopHeader extends StatelessWidget {
-  const _DesktopHeader({
-    required this.surfaceBg,
-    required this.borderColor,
-    required this.isDark,
-    required this.onAddRole,
-  });
-
-  final Color surfaceBg, borderColor;
+class _DesktopPageHeader extends StatelessWidget {
+  const _DesktopPageHeader({required this.isDark, required this.onAddRole});
   final bool isDark;
   final VoidCallback onAddRole;
 
   @override
   Widget build(BuildContext context) {
-    final mutedColor = isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted;
     final onSurface = isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
+    final mutedColor = isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
     return Padding(
-      padding: const EdgeInsets.only(top: 28, bottom: 4),
+      padding: const EdgeInsets.only(top: 28, bottom: 8),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Left: title + subtitle
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  TextButton.icon(
-                    onPressed: () => context.pop(),
-                    icon: Icon(Icons.arrow_back_rounded, size: 14, color: AppColors.primary),
-                    label: Text('Back', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.primary)),
-                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4), visualDensity: VisualDensity.compact),
-                  ),
-                ]),
-                const SizedBox(height: 6),
-                Text(
-                  'Roles & Permissions',
-                  style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: onSurface),
-                ),
+                Text('Roles & Permissions',
+                    style: GoogleFonts.poppins(
+                        fontSize: 22, fontWeight: FontWeight.w700, color: onSurface)),
                 const SizedBox(height: 4),
-                Text(
-                  'Control what each role can access across all modules',
-                  style: GoogleFonts.poppins(fontSize: 13, color: mutedColor),
-                ),
+                Text('Control what each role can access across all modules',
+                    style: GoogleFonts.poppins(fontSize: 13, color: mutedColor)),
               ],
             ),
           ),
           const SizedBox(width: 16),
-          Padding(
-            padding: const EdgeInsets.only(top: 28),
-            child: FilledButton.icon(
-              onPressed: onAddRole,
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: Text('Add Role', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              ),
+          // Right: Back + Add Role
+          OutlinedButton.icon(
+            onPressed: () => context.pop(),
+            icon: Icon(Icons.arrow_back_rounded, size: 14, color: onSurface),
+            label: Text('Back',
+                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500, color: onSurface)),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: borderColor),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
+          ),
+          const SizedBox(width: 10),
+          FilledButton.icon(
+            onPressed: onAddRole,
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: Text('Add Role',
+                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             ),
           ),
         ],
