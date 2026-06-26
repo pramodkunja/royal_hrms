@@ -38,16 +38,18 @@ class RolesPermissionsPage extends StatelessWidget {
                 style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: FilledButton.icon(
-                    onPressed: () => _openAddRole(context),
-                    icon: const Icon(Icons.add_rounded, size: 16),
-                    label: Text('Add Role', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      visualDensity: VisualDensity.compact,
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: FilledButton.icon(
+                      onPressed: () => _openAddRole(context),
+                      icon: const Icon(Icons.add_rounded, size: 16),
+                      label: Text('Add Role', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        visualDensity: VisualDensity.compact,
+                      ),
                     ),
                   ),
                 ),
@@ -96,7 +98,7 @@ class _DesktopHeader extends StatelessWidget {
               children: [
                 Row(children: [
                   TextButton.icon(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => context.pop(),
                     icon: Icon(Icons.arrow_back_rounded, size: 14, color: AppColors.primary),
                     label: Text('Back', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.primary)),
                     style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4), visualDensity: VisualDensity.compact),
