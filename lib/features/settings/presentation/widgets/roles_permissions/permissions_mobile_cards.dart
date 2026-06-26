@@ -11,120 +11,96 @@ class PermissionsMobileCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Column(
-      children: kPermissionMatrix
-          .map((row) => _FeatureCard(row: row, isDark: isDark))
-          .toList(),
-    );
-  }
-}
-
-class _FeatureCard extends StatelessWidget {
-  const _FeatureCard({required this.row, required this.isDark});
-
-  final PermissionRow row;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
     final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final surfaceBg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
+        color: surfaceBg,
         border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 13, 16, 10),
-            child: Text(
-              row.feature,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface,
-              ),
-            ),
-          ),
-          Divider(height: 1, color: borderColor),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-            child: Column(
-              children: [
-                for (int i = 0; i < kRoles.length; i += 2)
-                  Padding(
-                    padding: EdgeInsets.only(
-                      bottom: i + 2 < kRoles.length ? 8 : 0,
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _RolePill(
-                            role: kRoles[i],
-                            value: row.values[i],
-                            isDark: isDark,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: i + 1 < kRoles.length
-                              ? _RolePill(
-                                  role: kRoles[i + 1],
-                                  value: row.values[i + 1],
-                                  isDark: isDark,
-                                )
-                              : const SizedBox(),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
+          _SectionHeader(isDark: isDark, borderColor: borderColor),
+          ...kPermissionMatrix.asMap().entries.map((e) => _ModuleCard(
+            row: e.value,
+            borderColor: borderColor,
+            isDark: isDark,
+            isLast: e.key == kPermissionMatrix.length - 1,
+          )),
         ],
       ),
     );
   }
 }
 
-class _RolePill extends StatelessWidget {
-  const _RolePill({required this.role, required this.value, required this.isDark});
-
-  final String role, value;
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.isDark, required this.borderColor});
   final bool isDark;
+  final Color borderColor;
 
   @override
   Widget build(BuildContext context) {
+    final onSurface = isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
     final mutedColor = isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        PermissionCell(value: value, isDark: isDark),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: borderColor))),
+      child: Row(children: [
+        Icon(Icons.grid_on_outlined, size: 16, color: mutedColor),
         const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            role,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: mutedColor,
-            ),
-          ),
+        Text('Permission Matrix', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: onSurface)),
+        const Spacer(),
+        Text('${kPermissionMatrix.length} modules', style: GoogleFonts.poppins(fontSize: 11, color: mutedColor)),
+      ]),
+    );
+  }
+}
+
+class _ModuleCard extends StatelessWidget {
+  const _ModuleCard({required this.row, required this.borderColor, required this.isDark, required this.isLast});
+  final MatrixRow row;
+  final Color borderColor;
+  final bool isDark, isLast;
+
+  @override
+  Widget build(BuildContext context) {
+    final onSurface = isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
+    final mutedColor = isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted;
+    final altBg = isDark ? const Color(0xFF1E2438) : const Color(0xFFF8FAFC);
+
+    return Container(
+      decoration: isLast ? null : BoxDecoration(border: Border(bottom: BorderSide(color: borderColor))),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // Module header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(children: [
+            Icon(row.icon, size: 15, color: mutedColor),
+            const SizedBox(width: 8),
+            Text(row.module, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: onSurface)),
+          ]),
         ),
-      ],
+        // Role rows
+        ...List.generate(kRolesList.length, (i) => Container(
+          color: i.isOdd ? altBg : null,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+          child: Row(children: [
+            SizedBox(
+              width: 96,
+              child: Text(
+                kRolesList[i].name,
+                style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500, color: mutedColor),
+              ),
+            ),
+            const SizedBox(width: 12),
+            PermissionCell(value: row.values[i], isDark: isDark),
+          ]),
+        )),
+        const SizedBox(height: 4),
+      ]),
     );
   }
 }
