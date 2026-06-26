@@ -7,7 +7,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_loader.dart';
-import '../../../../core/widgets/app_nav_drawer.dart';
 import '../../domain/entities/email_template.dart';
 import '../providers/email_templates_providers.dart';
 import '../widgets/add_edit_email_template_dialog.dart';
@@ -48,12 +47,12 @@ class _EmailTemplatesPageState extends ConsumerState<EmailTemplatesPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).maybePop(),
+          tooltip: 'Back',
         ),
-        title: const Text('Royal HRMS'),
+        title: const Text('Email Templates'),
       ),
-      drawer: const AppNavDrawer(),
       body: asyncState.when(
         loading: () => const AppLoader(message: 'Loading templates…'),
         error: (e, _) => AppErrorView(
