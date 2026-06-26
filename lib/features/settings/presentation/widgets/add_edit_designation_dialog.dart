@@ -3,34 +3,50 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../domain/entities/department.dart';
 import '../providers/departments_providers.dart';
 import 'department_dialog_chrome.dart';
 import 'department_dialog_shared_widgets.dart';
 
-class AddEditDepartmentDialog extends ConsumerStatefulWidget {
-  const AddEditDepartmentDialog({super.key, this.existing});
+class AddEditDesignationDialog extends ConsumerStatefulWidget {
+  const AddEditDesignationDialog({
+    super.key,
+    required this.departmentId,
+    required this.departmentName,
+    this.existing,
+  });
 
-  final Department? existing;
+  final String departmentId;
+  final String departmentName;
+  final Designation? existing;
 
-  static Future<void> show(BuildContext context, {Department? existing}) {
+  static Future<void> show(
+    BuildContext context, {
+    required String departmentId,
+    required String departmentName,
+    Designation? existing,
+  }) {
     return showDialog(
       context: context,
-      builder: (_) => AddEditDepartmentDialog(existing: existing),
+      builder: (_) => AddEditDesignationDialog(
+        departmentId: departmentId,
+        departmentName: departmentName,
+        existing: existing,
+      ),
     );
   }
 
   @override
-  ConsumerState<AddEditDepartmentDialog> createState() =>
-      _AddEditDepartmentDialogState();
+  ConsumerState<AddEditDesignationDialog> createState() =>
+      _AddEditDesignationDialogState();
 }
 
-class _AddEditDepartmentDialogState
-    extends ConsumerState<AddEditDepartmentDialog> {
+class _AddEditDesignationDialogState
+    extends ConsumerState<AddEditDesignationDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameCtrl;
-  late final TextEditingController _descriptionCtrl;
   late bool _isActive;
   bool _isSaving = false;
   String? _errorMessage;
@@ -40,16 +56,14 @@ class _AddEditDepartmentDialogState
   @override
   void initState() {
     super.initState();
-    final dept = widget.existing;
-    _nameCtrl = TextEditingController(text: dept?.name ?? '');
-    _descriptionCtrl = TextEditingController(text: dept?.description ?? '');
-    _isActive = dept?.isActive ?? true;
+    final desig = widget.existing;
+    _nameCtrl = TextEditingController(text: desig?.name ?? '');
+    _isActive = desig?.isActive ?? true;
   }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
-    _descriptionCtrl.dispose();
     super.dispose();
   }
 
@@ -63,18 +77,22 @@ class _AddEditDepartmentDialogState
 
     setState(() => _isSaving = true);
     try {
-      final dept = Department(
+      final designation = Designation(
         id: widget.existing?.id ?? '',
         name: _nameCtrl.text.trim(),
-        description: _descriptionCtrl.text.trim(),
         isActive: _isActive,
-        designations: widget.existing?.designations ?? const [],
+        departmentId: widget.departmentId,
+        departmentName: widget.departmentName,
       );
 
       if (_isEditing) {
-        await ref.read(departmentsProvider.notifier).updateDepartment(dept);
+        await ref
+            .read(departmentsProvider.notifier)
+            .updateDesignation(designation);
       } else {
-        await ref.read(departmentsProvider.notifier).addDepartment(dept);
+        await ref
+            .read(departmentsProvider.notifier)
+            .addDesignation(designation);
       }
 
       if (mounted) Navigator.of(context).pop();
@@ -90,6 +108,10 @@ class _AddEditDepartmentDialogState
   @override
   Widget build(BuildContext context) {
     final isMobile = context.screenSize.width < 600;
+    final isDark = context.theme.brightness == Brightness.dark;
+    final chipBg = isDark ? AppColors.darkFieldFill : AppColors.lightFieldFill;
+    final mutedColor =
+        isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -97,13 +119,13 @@ class _AddEditDepartmentDialogState
           ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24)
           : const EdgeInsets.symmetric(horizontal: 80, vertical: 48),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 500),
+        constraints: const BoxConstraints(maxWidth: 460),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DeptDialogHeader(
-              existing: widget.existing,
+            DesigDialogHeader(
+              isEditing: _isEditing,
               onClose: () => Navigator.of(context).pop(),
             ),
             const Divider(height: 1),
@@ -123,8 +145,37 @@ class _AddEditDepartmentDialogState
                         ),
                         const SizedBox(height: 16),
                       ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: chipBg,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.business_outlined,
+                              size: 15,
+                              color: mutedColor,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Department: ${widget.departmentName}',
+                              style: context.textTheme.bodySmall?.copyWith(
+                                color: mutedColor,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                       const DeptDialogFieldLabel(
-                        label: 'Department Name',
+                        label: 'Designation Name',
                         required: true,
                       ),
                       const SizedBox(height: 8),
@@ -132,23 +183,11 @@ class _AddEditDepartmentDialogState
                         controller: _nameCtrl,
                         autofocus: true,
                         decoration: const InputDecoration(
-                          hintText: 'e.g. Engineering',
+                          hintText: 'e.g. Senior Engineer',
                         ),
                         validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Department name is required'
+                            ? 'Designation name is required'
                             : null,
-                      ),
-                      const SizedBox(height: 20),
-                      const DeptDialogDescriptionLabel(),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _descriptionCtrl,
-                        minLines: 3,
-                        maxLines: 5,
-                        decoration: const InputDecoration(
-                          hintText: 'What does this department do?',
-                          alignLabelWithHint: true,
-                        ),
                       ),
                       const SizedBox(height: 20),
                       DeptActiveCheckboxRow(
@@ -165,6 +204,7 @@ class _AddEditDepartmentDialogState
             DeptDialogFooter(
               isEditing: _isEditing,
               isSaving: _isSaving,
+              isDesignation: true,
               onCancel: () => Navigator.of(context).pop(),
               onSubmit: _submit,
             ),

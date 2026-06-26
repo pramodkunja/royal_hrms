@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/smtp_config.dart';
+import 'smtp_config_card_widgets.dart';
 
 class SmtpConfigCard extends StatelessWidget {
   const SmtpConfigCard({
@@ -20,7 +21,6 @@ class SmtpConfigCard extends StatelessWidget {
 
   /// Null means the card is the active one — "Set Active" button is hidden.
   final VoidCallback? onSetActive;
-
   final VoidCallback? onDelete;
 
   @override
@@ -44,9 +44,6 @@ class SmtpConfigCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ----------------------------------------------------------------
-            // Header
-            // ----------------------------------------------------------------
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -93,26 +90,16 @@ class SmtpConfigCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                _StatusBadge(isActive: config.isActive),
+                SmtpStatusBadge(isActive: config.isActive),
               ],
             ),
-
             const SizedBox(height: 16),
             const Divider(color: AppColors.lightBorder, height: 1),
             const SizedBox(height: 16),
-
-            // ----------------------------------------------------------------
-            // Detail grid — two columns
-            // ----------------------------------------------------------------
-            _DetailGrid(config: config),
-
+            SmtpDetailGrid(config: config),
             const SizedBox(height: 16),
             const Divider(color: AppColors.lightBorder, height: 1),
             const SizedBox(height: 12),
-
-            // ----------------------------------------------------------------
-            // Action buttons
-            // ----------------------------------------------------------------
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -151,8 +138,8 @@ class SmtpConfigCard extends StatelessWidget {
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(0, 36),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -176,7 +163,8 @@ class SmtpConfigCard extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Configuration'),
         content: Text(
-          'Are you sure you want to delete "${config.name}"? This action cannot be undone.',
+          'Are you sure you want to delete "${config.name}"? '
+          'This action cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -189,7 +177,8 @@ class SmtpConfigCard extends StatelessWidget {
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.error,
               minimumSize: const Size(0, 36),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
             onPressed: () =>
                 Navigator.of(ctx, rootNavigator: true).pop(true),
@@ -209,125 +198,4 @@ class SmtpConfigCard extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
   );
-}
-
-// ---------------------------------------------------------------------------
-// Status badge
-// ---------------------------------------------------------------------------
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.isActive});
-
-  final bool isActive;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isActive ? AppColors.success : AppColors.lightTextMuted;
-    final label = isActive ? 'Active' : 'Inactive';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Detail grid — pairs of label + value, rendered in two columns
-// ---------------------------------------------------------------------------
-
-class _DetailGrid extends StatelessWidget {
-  const _DetailGrid({required this.config});
-
-  final SmtpConfig config;
-
-  String get _priorityLabel =>
-      config.priority == SmtpPriority.normal ? 'Normal' : 'High';
-
-  String get _receiverLabel =>
-      config.receiverEmail == SmtpReceiverEmail.emailId
-          ? 'Email ID'
-          : 'Personal Email ID';
-
-  @override
-  Widget build(BuildContext context) {
-    final portLabel =
-        config.useTls ? '${config.port} · TLS' : config.port.toString();
-
-    final rows = <(String, String)>[
-      ('HOST', config.host),
-      ('PORT', portLabel),
-      ('FROM EMAIL', config.fromEmail),
-      ('SENDER NAME', config.senderName),
-      ('USERNAME', config.username),
-      ('PASSWORD', '••••••••'),
-      ('BCC EMAIL', config.bccEmail ?? '-'),
-      ('PRIORITY', _priorityLabel),
-      ('RECEIVER EMAIL', _receiverLabel),
-    ];
-
-    // Split into pairs of two per row
-    final List<Widget> rowWidgets = [];
-    for (int i = 0; i < rows.length; i += 2) {
-      final left = rows[i];
-      final right = i + 1 < rows.length ? rows[i + 1] : null;
-      rowWidgets.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Row(
-            children: [
-              Expanded(child: _DetailCell(label: left.$1, value: left.$2)),
-              if (right != null)
-                Expanded(child: _DetailCell(label: right.$1, value: right.$2)),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Column(children: rowWidgets);
-  }
-}
-
-class _DetailCell extends StatelessWidget {
-  const _DetailCell({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: textTheme.labelSmall?.copyWith(
-            color: AppColors.lightTextMuted,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: textTheme.bodySmall?.copyWith(
-            color: AppColors.lightOnSurface,
-            fontWeight: FontWeight.w500,
-          ),
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
-    );
-  }
 }

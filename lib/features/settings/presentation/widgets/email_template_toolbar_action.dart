@@ -1,0 +1,15 @@
+enum EmailTemplateToolbarAction {
+  bold,
+  italic,
+  underline,
+  strikethrough,
+  unorderedList,
+  orderedList,
+  alignLeft,
+  alignCenter,
+  alignRight,
+  insertLink,
+  removeLink,
+  insertImage,
+  clearFormatting,
+}

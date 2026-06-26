@@ -4,145 +4,18 @@ import 'package:go_router/go_router.dart';
 
 import '../constants/app_constants.dart';
 import '../router/route_guard.dart';
-import '../router/route_paths.dart';
 import '../storage/models/user_session_model.dart';
 import '../storage/user_session_service.dart';
 import '../utils/extensions.dart';
+import 'app_nav_drawer_data.dart';
 
-class _MenuItem {
-  const _MenuItem({
-    required this.icon,
-    required this.label,
-    required this.path,
-  });
-
-  final IconData icon;
-  final String label;
-  final String path;
-}
-
-class _MenuSection {
-  const _MenuSection(this.title, this.items);
-
-  final String title;
-  final List<_MenuItem> items;
-}
-
-const List<_MenuSection> _sections = [
-  _MenuSection('Main', [
-    _MenuItem(
-      icon: Icons.dashboard_outlined,
-      label: 'Dashboard',
-      path: RoutePaths.dashboard,
-    ),
-    _MenuItem(
-      icon: Icons.campaign_outlined,
-      label: 'Announcements',
-      path: RoutePaths.announcements,
-    ),
-  ]),
-  _MenuSection('Workforce', [
-    _MenuItem(
-      icon: Icons.badge_outlined,
-      label: 'Employees',
-      path: RoutePaths.employees,
-    ),
-    _MenuItem(
-      icon: Icons.account_tree_outlined,
-      label: 'Org Chart',
-      path: RoutePaths.orgChart,
-    ),
-    _MenuItem(
-      icon: Icons.apartment_outlined,
-      label: 'Branches',
-      path: RoutePaths.branches,
-    ),
-  ]),
-  _MenuSection('Time & Pay', [
-    _MenuItem(
-      icon: Icons.access_time_outlined,
-      label: 'Attendance',
-      path: RoutePaths.attendance,
-    ),
-    _MenuItem(
-      icon: Icons.payments_outlined,
-      label: 'Payroll',
-      path: RoutePaths.payroll,
-    ),
-    _MenuItem(
-      icon: Icons.receipt_outlined,
-      label: 'My Payslips',
-      path: RoutePaths.myPayslips,
-    ),
-    _MenuItem(
-      icon: Icons.beach_access_outlined,
-      label: 'Leave Management',
-      path: RoutePaths.leave,
-    ),
-    _MenuItem(
-      icon: Icons.account_balance_wallet_outlined,
-      label: 'Expenses',
-      path: RoutePaths.expenses,
-    ),
-  ]),
-  _MenuSection('HR Ops', [
-    _MenuItem(
-      icon: Icons.task_alt_outlined,
-      label: 'Approvals',
-      path: RoutePaths.approvals,
-    ),
-    _MenuItem(
-      icon: Icons.logout_outlined,
-      label: 'Separation & FnF',
-      path: RoutePaths.separation,
-    ),
-    _MenuItem(
-      icon: Icons.folder_outlined,
-      label: 'Document Center',
-      path: RoutePaths.documents,
-    ),
-  ]),
-  _MenuSection('My', [
-    _MenuItem(
-      icon: Icons.inbox_outlined,
-      label: 'My Requests',
-      path: RoutePaths.myRequests,
-    ),
-    _MenuItem(
-      icon: Icons.account_circle_outlined,
-      label: 'My Profile',
-      path: RoutePaths.myProfile,
-    ),
-  ]),
-  _MenuSection('System', [
-    _MenuItem(
-      icon: Icons.bar_chart_outlined,
-      label: 'Reports',
-      path: RoutePaths.reports,
-    ),
-    _MenuItem(
-      icon: Icons.shield_outlined,
-      label: 'Audit Log',
-      path: RoutePaths.audit,
-    ),
-    _MenuItem(
-      icon: Icons.settings_outlined,
-      label: 'Settings',
-      path: RoutePaths.settings,
-    ),
-  ]),
-];
-
-/// Primary navigation drawer shared by every protected screen, opened
-/// from the hamburger icon in each feature's app bar. Items are
-/// filtered by [RouteGuard.routePermissionAccess] — the same map the
-/// router uses to guard routes — so the menu and the guard can never
-/// disagree.
+/// Primary navigation drawer shared by every protected screen. Items are
+/// filtered by [RouteGuard.routePermissionAccess] so the menu and guard agree.
 class AppNavDrawer extends ConsumerWidget {
   const AppNavDrawer({super.key});
 
-  List<_MenuItem> _visibleItems(
-    List<_MenuItem> items,
+  List<NavMenuItem> _visibleItems(
+    List<NavMenuItem> items,
     Set<String> permissions,
   ) {
     return items.where((item) {
@@ -168,7 +41,7 @@ class AppNavDrawer extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.only(bottom: 8),
                 children: [
-                  for (final section in _sections)
+                  for (final section in navSections)
                     ..._buildSection(
                       context,
                       section,
@@ -188,7 +61,7 @@ class AppNavDrawer extends ConsumerWidget {
 
   List<Widget> _buildSection(
     BuildContext context,
-    _MenuSection section,
+    NavMenuSection section,
     String currentPath,
     Set<String> permissions,
   ) {
