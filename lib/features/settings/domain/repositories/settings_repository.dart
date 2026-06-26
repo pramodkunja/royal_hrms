@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../entities/company_info.dart';
 import '../entities/department.dart';
 import '../entities/email_template.dart';
 import '../entities/smtp_config.dart';
@@ -25,6 +26,10 @@ abstract class SettingsRepository {
     String filename,
     Uint8List bytes,
   );
+
+  // Company Info
+  Future<CompanyInfo> getCompanyInfo();
+  Future<CompanyInfo> updateCompanyInfo(CompanyInfo info, {Uint8List? logoBytes});
 
   // Departments
   Future<List<Department>> getDepartments();

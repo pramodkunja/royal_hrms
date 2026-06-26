@@ -31,4 +31,5 @@ class RoutePaths {
   static const String smtpSettings = '/settings/smtp';
   static const String settingsEmailTemplates = '/settings/email-templates';
   static const String settingsDepartments = '/settings/departments';
+  static const String settingsCompanyInfo = '/settings/company-info';
 }

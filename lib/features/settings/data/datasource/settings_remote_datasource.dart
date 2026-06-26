@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../models/company_info_model.dart';
 import '../models/department_model.dart';
 import '../models/email_template_model.dart';
 import '../models/smtp_config_model.dart';
@@ -25,6 +26,14 @@ abstract class SettingsRemoteDataSource {
     String filename,
     Uint8List bytes,
   );
+
+  // Company Info
+  Future<CompanyInfoModel> fetchCompanyInfo();
+  Future<CompanyInfoModel> updateCompanyInfo(
+    Map<String, dynamic> data, {
+    Uint8List? logoBytes,
+    String? logoFilename,
+  });
 
   // Departments
   Future<List<DepartmentModel>> fetchDepartments();

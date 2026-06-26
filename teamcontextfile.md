@@ -1004,3 +1004,258 @@ Root cause: `/token/refresh/` requires `{"refresh": "<token>"}` in the request b
 - Tokens stored in `flutter_secure_storage` — never in `SharedPreferences`
 - `.env` gitignored; `.env.example` committed for team onboarding
 - Feature-first folder structure maintained; all new settings modules in their own subfolder
+
+---
+
+---
+
+# Team Context File — Royal HRMS
+**Date:** 2026-06-26
+**Author:** Vignesh
+**Session type:** Company Info feature — full stack + API integration + UI polish
+
+---
+
+## 1. Overview
+
+This session built the complete Company Information settings feature from scratch (domain → data → presentation), wired it to the real backend API, and polished the UI. A critical `AuthInterceptor` bug that caused the page to freeze on the loading spinner was also fixed as part of this session.
+
+---
+
+## 2. Features Implemented
+
+### 2.1 Company Info — Full Feature (Clean Architecture)
+
+#### Domain Layer
+**File:** `lib/features/settings/domain/entities/company_info.dart`
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | `int?` | Optional — absent on first GET if not yet created |
+| `name` | `String` | Maps to `company_name` in API |
+| `tradeName` | `String` | `trade_name` |
+| `gstin` | `String` | |
+| `cin` | `String` | |
+| `pan` | `String` | |
+| `tan` | `String` | |
+| `address` | `String` | |
+| `city` | `String` | |
+| `state` | `String` | India state / UT name |
+| `pinCode` | `String` | `pin_code` |
+| `website` | `String` | |
+| `phone` | `String` | Maps to `official_phone` in API |
+| `logoUrl` | `String?` | Maps to `logo` in API response |
+
+**File:** `lib/features/settings/domain/repositories/settings_repository.dart`
+Added abstract methods:
+```dart
+Future<CompanyInfo> getCompanyInfo();
+Future<CompanyInfo> updateCompanyInfo(CompanyInfo info, {Uint8List? logoBytes});
+```
+
+#### Data Layer
+**File:** `lib/features/settings/data/models/company_info_model.dart`
+
+Critical JSON field mapping (entity name → API key):
+
+| Entity field | API request key | API response key |
+|---|---|---|
+| `name` | `company_name` | `company_name` |
+| `phone` | `official_phone` | `official_phone` |
+| `logoUrl` | _(file upload, not a string key)_ | `logo` |
+| `pinCode` | `pin_code` | `pin_code` |
+| `tradeName` | `trade_name` | `trade_name` |
+
+**File:** `lib/features/settings/data/datasource/settings_company_info_datasource_mixin.dart`
+- `fetchCompanyInfo()` — `GET /settings/company/`, unwraps `{status, message, data}` envelope
+- `updateCompanyInfo(data, {logoBytes, logoFilename})` — **PUT** (not PATCH) with `multipart/form-data` via Dio `FormData`; attaches logo file when `logoBytes != null`
+
+**File:** `lib/features/settings/data/datasource/settings_remote_datasource.dart`
+Added:
+```dart
+Future<CompanyInfoModel> fetchCompanyInfo();
+Future<CompanyInfoModel> updateCompanyInfo(Map<String, dynamic> data, {Uint8List? logoBytes, String? logoFilename});
+```
+
+**File:** `lib/features/settings/data/repositories/settings_repository_impl.dart`
+- `getCompanyInfo()` — delegates to datasource, maps model → entity
+- `updateCompanyInfo(info, {logoBytes})` — calls `CompanyInfoModel.fromEntity(info).toUpdateJson()`, passes `logoBytes` and `logoFilename: 'logo.jpg'` to datasource
+
+#### Presentation Layer
+**File:** `lib/features/settings/presentation/providers/company_info_providers.dart`
+
+```dart
+class CompanyInfoNotifier extends AsyncNotifier<CompanyInfo> {
+  @override
+  Future<CompanyInfo> build() =>
+      _repo.getCompanyInfo().catchError((_) => const CompanyInfo());
+
+  Future<bool> save(CompanyInfo info, {Uint8List? logoBytes}) async {
+    state = const AsyncLoading();
+    final result = await AsyncValue.guard(
+      () => _repo.updateCompanyInfo(info, logoBytes: logoBytes),
+    );
+    state = result.hasValue ? result : AsyncData(info);
+    return result.hasValue;
+  }
+}
+```
+
+- `catchError` on `build()` means a failed GET still shows the empty form (never stuck on error screen)
+- On failed save, `state` is restored to the previously loaded data (not stuck in loading)
+
+**File:** `lib/features/settings/presentation/pages/company_info/company_info_page.dart`
+
+Key implementation decisions:
+
+| Decision | Why |
+|---|---|
+| `_populate()` uses direct field assignment (no `setState`) | Calling `setState` inside `build()` crashes with Flutter assertion error |
+| `ref.listen` fires `setState(() => _initialized = true)` | Listener fires after build, making it safe to trigger a rebuild |
+| Synchronous first-build check (`if (!_initialized && asyncInfo.hasValue)`) | Ensures controllers are filled on the very first frame when data is already cached |
+| `_AppBar` is `const` with no `onSave` | Save action removed from AppBar — lives only in the form footer |
+| `_ErrorBody` uses `OutlinedButton` (not `AppErrorView`) | `AppErrorView` uses `FilledButton` which crashes with unbounded width in body context |
+
+**Form widgets (`lib/features/settings/presentation/widgets/company_info/`):**
+
+| File | Contents |
+|---|---|
+| `company_info_form.dart` | Root form + `_CompanyInfoHeader` + `CompanyInfoFooter` |
+| `branding_section.dart` | Logo preview + file_picker upload |
+| `legal_section.dart` | Company Name, Trade Name, GSTIN, CIN, PAN, TAN |
+| `address_section.dart` | Address textarea, City, State dropdown (India states list), PIN Code |
+| `contact_section.dart` | Website + Official Phone |
+| `section_card.dart` | Shared bordered card with icon+title header |
+
+---
+
+### 2.2 Routing
+**File:** `lib/core/router/route_paths.dart`
+```dart
+static const String settingsCompanyInfo = '/settings/company-info';
+```
+
+**File:** `lib/core/router/app_router.dart`
+```dart
+GoRoute(
+  path: RoutePaths.settingsCompanyInfo,
+  builder: (context, state) => const CompanyInfoPage(),
+)
+```
+
+**File:** `lib/features/settings/presentation/pages/settings_page_types.dart`
+- Company Info tile updated: `routePath: RoutePaths.settingsCompanyInfo, hasChevron: true`
+
+---
+
+## 3. Bugs Fixed
+
+### Bug 1 — AuthInterceptor Web Crypto `OperationError` (page frozen on loading)
+**File:** `lib/core/network/interceptors/auth_interceptor.dart`
+
+**Root cause:** `flutter_secure_storage_web` throws a native JS `DOMException: OperationError` when Web Crypto API is unavailable or no token is stored. This is not a `DioException` — it escapes `ApiClient._guard()` entirely and reaches the root zone uncaught. The Riverpod provider stays in `AsyncLoading` forever.
+
+**Fix — `_RefreshResult` enum pattern:**
+```dart
+enum _RefreshResult { success, refreshFailed, storageUnavailable }
+```
+
+- `onRequest`: wrapped `getAccessToken()` in try/catch; on exception, proceed without a token (server returns 401 normally)
+- `_tryRefreshAccessToken()`: wrapped `getRefreshToken()` in try/catch; returns `storageUnavailable` on exception
+- `onError`: for `storageUnavailable`, passes the 401 through **without** calling `onSessionExpired()` — prevents incorrect logout when storage is temporarily unavailable
+
+**Critical distinction:** `storageUnavailable` ≠ `refreshFailed`. Only `refreshFailed` triggers logout. Storage errors are transient.
+
+---
+
+### Bug 2 — `BoxConstraints forces an infinite width` for footer `FilledButton`
+**File:** `company_info_form.dart`
+
+**Root cause:** `SingleChildScrollView → Column(crossAxisAlignment: start) → Row → FilledButton` — Flutter Web passes `w=Infinity` through this chain; `ButtonStyleButton._computeSize` crashes.
+
+**Fix:** Replaced the `Row` layout entirely. Switched `CompanyInfoFooter` to a `Column(crossAxisAlignment: CrossAxisAlignment.stretch)` — full-width buttons receive bounded constraints from the column, not unbounded from a row.
+
+---
+
+### Bug 3 — Incorrect API endpoint (404 on company info)
+**File:** `lib/core/constants/api_constants.dart`
+
+**Root cause:** Endpoint was set to `/company/` but backend serves it at `/settings/company/`.
+
+**Fix:** `companyInfoEndpoint = '/settings/company/'`
+
+---
+
+## 4. API Spec (Company Info)
+
+| Method | Endpoint | Content-Type |
+|---|---|---|
+| GET | `/api/settings/company/` | `application/json` |
+| PUT | `/api/settings/company/` | `multipart/form-data` |
+
+**Response envelope:**
+```json
+{ "status": "success", "message": "...", "data": { ... } }
+```
+
+**Key field names (GET response / PUT body):**
+- `company_name` — company legal name
+- `official_phone` — phone number
+- `trade_name`, `gstin`, `cin`, `pan`, `tan`, `address`, `city`, `state`, `pin_code`, `website`
+- `logo` — URL in GET response; `MultipartFile` in PUT body
+
+---
+
+## 5. UI Changes
+
+### AppBar
+- Removed "Save Changes" button from the AppBar actions entirely
+- Title changed from "Royal HRMS" to "Company Information"
+
+### Form Footer (CompanyInfoFooter)
+- **Before:** Side-by-side row — Cancel (outlined) left, Save Changes (filled, 140px) right
+- **After:** Stacked full-width column:
+  - **Save Changes** — `FilledButton.icon` with `Icons.check_circle_outline`, 52px height, `borderRadius: 14`, spans full width
+  - **Cancel** — `OutlinedButton`, 48px height, `borderRadius: 14`, neutral `onSurface` color, below Save
+
+---
+
+## 6. Files Created / Modified
+
+| File | Action |
+|---|---|
+| `lib/features/settings/domain/entities/company_info.dart` | Created — `CompanyInfo` entity |
+| `lib/features/settings/data/models/company_info_model.dart` | Created — fixed field mappings (`company_name`, `official_phone`, `logo`) |
+| `lib/features/settings/data/datasource/settings_company_info_datasource_mixin.dart` | Created — GET + PUT multipart |
+| `lib/features/settings/data/datasource/settings_remote_datasource.dart` | Modified — added Company Info abstract methods |
+| `lib/features/settings/data/datasource/settings_remote_datasource_impl.dart` | Modified — added `CompanyInfoDataSourceMixin` to `with` clause |
+| `lib/features/settings/data/repositories/settings_repository_impl.dart` | Modified — added Company Info implementations |
+| `lib/features/settings/domain/repositories/settings_repository.dart` | Modified — added Company Info abstract methods |
+| `lib/features/settings/presentation/providers/company_info_providers.dart` | Created — `CompanyInfoNotifier` + `companyInfoProvider` |
+| `lib/features/settings/presentation/pages/company_info/company_info_page.dart` | Created — full page with safe init pattern |
+| `lib/features/settings/presentation/widgets/company_info/company_info_form.dart` | Created — form + redesigned footer |
+| `lib/features/settings/presentation/widgets/company_info/branding_section.dart` | Created |
+| `lib/features/settings/presentation/widgets/company_info/legal_section.dart` | Created |
+| `lib/features/settings/presentation/widgets/company_info/address_section.dart` | Created |
+| `lib/features/settings/presentation/widgets/company_info/contact_section.dart` | Created |
+| `lib/features/settings/presentation/widgets/company_info/section_card.dart` | Created |
+| `lib/features/settings/feature_module.dart` | Modified — added Company Info exports |
+| `lib/features/settings/presentation/pages/settings_page_types.dart` | Modified — Company Info tile route + chevron |
+| `lib/core/constants/api_constants.dart` | Modified — `companyInfoEndpoint = '/settings/company/'` |
+| `lib/core/router/route_paths.dart` | Modified — added `settingsCompanyInfo` |
+| `lib/core/router/app_router.dart` | Modified — registered `CompanyInfoPage` route |
+| `lib/core/network/interceptors/auth_interceptor.dart` | Modified — `_RefreshResult` enum, Web Crypto error handling |
+| `.env` | Recreated — `API_BASE_URL=http://192.168.0.149:8000/api` |
+
+---
+
+## 7. Architecture Standards Followed
+
+- Zero hardcoded colors — all `AppColors.*`
+- Zero hardcoded text styles — all `context.textTheme.*`
+- No API calls inside widgets — all network via `CompanyInfoNotifier`
+- Repository returns domain entities only — models stay in the data layer
+- `AsyncNotifierProvider` used — consistent with project standard
+- Multipart upload follows the same `FormData` pattern as email template attachments
+- Route strings use `RoutePaths` constants
+- All files ≤ 250 lines (form split into 5 section widget files)

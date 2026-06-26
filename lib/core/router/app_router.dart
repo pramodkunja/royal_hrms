@@ -116,6 +116,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const DepartmentsPage(),
       ),
       GoRoute(
+        path: RoutePaths.settingsCompanyInfo,
+        builder: (context, state) => const CompanyInfoPage(),
+      ),
+      GoRoute(
         path: RoutePaths.recruitment,
         builder: (context, state) => const RecruitmentPage(),
       ),

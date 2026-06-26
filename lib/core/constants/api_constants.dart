@@ -4,7 +4,7 @@ class ApiConstants {
   const ApiConstants._();
 
   static String get baseUrl =>
-      dotenv.env['API_BASE_URL'] ?? 'http://localhost:8000/api';
+      dotenv.env['API_BASE_URL'] ?? 'http://192.168.0.149:8000/api';
 
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
@@ -36,4 +36,7 @@ class ApiConstants {
   // Departments & Designations
   static const String settingsDepartmentsEndpoint = '/departments/';
   static const String settingsDesignationsEndpoint = '/designations/';
+
+  // Company Info
+  static const String companyInfoEndpoint = '/settings/company/';
 }

@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 
+import '../../data/models/company_info_model.dart';
 import '../../data/models/department_model.dart';
 import '../../data/models/email_template_model.dart';
+import '../../domain/entities/company_info.dart';
 import '../../domain/entities/department.dart';
 import '../../domain/entities/email_template.dart';
 import '../../domain/entities/smtp_config.dart';
@@ -12,6 +14,30 @@ class SettingsRepositoryImpl implements SettingsRepository {
   SettingsRepositoryImpl(this._remoteDataSource);
 
   final SettingsRemoteDataSource _remoteDataSource;
+
+  // ---------------------------------------------------------------------------
+  // Company Info
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<CompanyInfo> getCompanyInfo() async {
+    final model = await _remoteDataSource.fetchCompanyInfo();
+    return model.toEntity();
+  }
+
+  @override
+  Future<CompanyInfo> updateCompanyInfo(
+    CompanyInfo info, {
+    Uint8List? logoBytes,
+  }) async {
+    final patch = CompanyInfoModel.fromEntity(info).toUpdateJson();
+    final model = await _remoteDataSource.updateCompanyInfo(
+      patch,
+      logoBytes: logoBytes,
+      logoFilename: logoBytes != null ? 'logo.jpg' : null,
+    );
+    return model.toEntity();
+  }
 
   // ---------------------------------------------------------------------------
   // SMTP

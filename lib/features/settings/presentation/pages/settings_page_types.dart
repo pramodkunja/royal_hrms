@@ -54,6 +54,8 @@ const List<SettingsTileData> kAllSettingsTiles = [
     subtitle: 'Name, GST, address, registration details',
     accentColor: AppColors.primary,
     tabs: {SettingsFilterTab.all, SettingsFilterTab.company},
+    routePath: RoutePaths.settingsCompanyInfo,
+    hasChevron: true,
   ),
   SettingsTileData(
     icon: Icons.account_tree_outlined,
