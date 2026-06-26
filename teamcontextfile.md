@@ -781,6 +781,226 @@ This session focused entirely on refactoring all large files in the Settings fea
 ## 5. Git
 
 **Branch:** `main`  
-**Commit:** _(this session)_ — _refactor: split all large settings files to ≤ 250 lines_  
+**Commit:** `457c895` — _refactor: split all large settings files to ≤ 250 lines_  
 **Remote:** `https://github.com/pramodkunja/royal_hrms.git`  
 **Status:** Pushed ✓
+
+---
+
+---
+
+# Team Context File — Royal HRMS
+**Date:** 2026-06-26
+**Author:** Pramod Kunja
+**Session type:** Auth integration + Google Fonts + Settings UI + Folder reorganisation
+
+---
+
+## 1. Overview
+
+This session completed the end-to-end auth token flow (secure storage → Bearer injection → silent refresh), switched the app font to Google Fonts, added icons and a pill highlight to the settings nav tabs, built the Roles & Permissions page, and reorganised all settings pages and widgets into named subfolders. All code follows the project's Clean Architecture (Feature-First + Riverpod).
+
+---
+
+## 2. Features Implemented
+
+### 2.1 Google Fonts — Replace Local Poppins TTFs
+
+**Files changed:**
+- `pubspec.yaml` — removed `fonts:` section, added `google_fonts: ^6.2.1`
+- `lib/core/theme/app_typography.dart` — all 14 M3 text styles now use `GoogleFonts.poppins(...)`; removed `static const String fontFamily`
+- `lib/core/theme/app_theme.dart` — `fontFamily`, `AppBarTheme.titleTextStyle`, and button `textStyle` all use `GoogleFonts.poppins()`; removed `const` from `AppBarTheme` constructors (non-const at runtime)
+
+---
+
+### 2.2 Settings Nav Tab Bar — Icons + Pill Highlight
+
+**File:** `lib/features/settings/presentation/widgets/settings_tab_bar.dart`
+- Each `_TabItem` now accepts `IconData icon`
+- Active tab: `AnimatedContainer` with `borderRadius: 10`, primary-tinted fill, 180 ms ease-in-out
+- Inactive tab: transparent background
+- Icon rendered at size 15 followed by 6 px gap then label text
+
+**File:** `lib/features/settings/presentation/pages/settings_page_types.dart`
+- Added `IconData get icon` extension on `SettingsFilterTab`: tune, business, extension, email, dns
+
+---
+
+### 2.3 Roles & Permissions Page
+
+New files under `lib/features/settings/presentation/`:
+
+| File | Contents |
+|---|---|
+| `widgets/roles_permissions/permission_matrix_data.dart` | `kPermFull`, `kPermNone` constants; `PermissionRow` class; `kRoles` list; `kPermissionMatrix` — 10 rows covering all HRMS features |
+| `widgets/roles_permissions/permission_cell.dart` | Green check for `full`, grey dash for `none`, primary badge for custom values |
+| `widgets/roles_permissions/permissions_desktop_table.dart` | Bordered container, alternating row backgrounds, `Expanded(flex:3)` for feature, `flex:2` per role column |
+| `widgets/roles_permissions/permissions_mobile_cards.dart` | One card per `PermissionRow`, 2-column role grid via `_RolePill` |
+| `pages/roles_permissions/roles_permissions_page.dart` | Responsive: desktop uses breadcrumb body bar, mobile uses standard AppBar; switches at 600 px |
+
+Routing:
+- `RoutePaths.settingsRolesPermissions = '/settings/roles-permissions'` added to `route_paths.dart`
+- GoRoute registered in `app_router.dart`
+- Tile with `hasChevron: true` added in `settings_page_types.dart`
+- Exported from `feature_module.dart`
+
+---
+
+### 2.4 Settings Folder Reorganisation
+
+All existing settings pages and widgets moved with `git mv` (history preserved) into named subfolders:
+
+| Old location | New location |
+|---|---|
+| `pages/departments_page.dart` | `pages/departments/departments_page.dart` |
+| `pages/email_templates_page.dart` | `pages/email_templates/email_templates_page.dart` |
+| `pages/smtp_settings_body.dart` | `pages/smtp/smtp_settings_body.dart` |
+| `pages/smtp_settings_page.dart` | `pages/smtp/smtp_settings_page.dart` |
+| `widgets/smtp_*.dart` (5 files) | `widgets/smtp/` |
+| `widgets/email_template_*.dart` (13 files) | `widgets/email_templates/` |
+| `widgets/departments_*.dart` + department dialog files (11 files) | `widgets/departments/` |
+
+Import depth corrected across all moved files with `sed` (e.g. `../../../../core/` → `../../../../../core/`).
+
+`feature_module.dart` fully rewritten with organised export sections per subfolder.
+
+---
+
+### 2.5 Secure Token Storage
+
+**File:** `lib/services/auth_storage.dart` *(new)*
+
+```dart
+Future<void> saveTokens(String access, String refresh)
+Future<String?> getAccessToken()
+Future<String?> getRefreshToken()
+Future<void> clearTokens()
+```
+
+Uses `flutter_secure_storage` (already in `pubspec.yaml`). Keychain on iOS, EncryptedFile on Android. No `AndroidOptions` override — v10 applies custom ciphers automatically.
+
+---
+
+### 2.6 Login — Extract and Store Tokens
+
+**File:** `lib/features/auth/data/datasource/auth_remote_datasource.dart`
+
+After a successful login the response body has this shape:
+```json
+{ "status": "success", "data": { "access": "...", "refresh": "...", "user": { ... } } }
+```
+
+Added guarded token extraction immediately after unwrapping the envelope:
+```dart
+final accessToken = data['access'] as String? ?? '';
+final refreshToken = data['refresh'] as String? ?? '';
+if (accessToken.isNotEmpty && refreshToken.isNotEmpty) {
+  await saveTokens(accessToken, refreshToken);
+}
+```
+
+> **Note:** A temporary `print('LOGIN RESPONSE BODY: $body')` was added then removed during debugging.
+
+---
+
+### 2.7 dotenv — Runtime baseUrl
+
+**Problem:** `ApiConstants.baseUrl` was a hardcoded `const String` IP, breaking every other team member's machine.
+
+**Files changed:**
+
+| File | Change |
+|---|---|
+| `pubspec.yaml` | Added `flutter_dotenv: ^5.2.1`; `.env` declared as Flutter asset |
+| `.env` | Created (gitignored) — `API_BASE_URL=http://<dev-machine-ip>:8000/api` |
+| `.env.example` | Created (committed) — `API_BASE_URL=http://localhost:8000/api` |
+| `.gitignore` | Added `.env` |
+| `lib/core/constants/api_constants.dart` | `baseUrl` changed from `static const String` to `static String get` reading from `dotenv.env['API_BASE_URL']` with fallback `http://localhost:8000/api` |
+| `lib/main.dart` | `await dotenv.load(fileName: '.env')` added before `runApp()` |
+
+---
+
+### 2.8 AuthInterceptor — Bearer Injection + Token-Based Refresh
+
+**File:** `lib/core/network/interceptors/auth_interceptor.dart` — completely rewritten.
+
+**Before:** Cookie-jar only — injected no headers; refresh POST sent empty body; `debugCookieJar` debug field.
+
+**After:**
+
+| Hook | Behaviour |
+|---|---|
+| `onRequest` | Calls `getAccessToken()`; if non-empty adds `Authorization: Bearer <token>` header |
+| `onError` (401) | Calls `getRefreshToken()`, POSTs `{'refresh': storedRefresh}` to `/token/refresh/`, reads `response.data['data']['access']` (and `['refresh']`), calls `saveTokens()`, retries original request |
+| Failure path | Calls `clearTokens()` then `onSessionExpired()` |
+
+**File:** `lib/core/network/api_client.dart`
+- Removed `debugCookieJar: ...` line from `AuthInterceptor(...)` constructor call
+
+---
+
+## 3. Bugs Fixed
+
+### Bug 1 — `const AppBarTheme` compile error
+`GoogleFonts.poppins()` is not a compile-time constant. Removed `const` from both `AppBarTheme` constructors in `app_theme.dart`.
+
+### Bug 2 — Tokens never stored after login
+Root cause: tokens were in `response.data['data']` but code was reading from `response.data` directly. Fixed by unwrapping the `data` envelope first, then casting with `as String? ?? ''` guard.
+
+### Bug 3 — Cookie jar always empty on device
+Root cause: backend issues tokens in the response body, not only in `Set-Cookie` headers. The cookie jar had no tokens to send. Fixed by switching to explicit Bearer token injection in `AuthInterceptor.onRequest`.
+
+### Bug 4 — Refresh POST returned 401 (no body)
+Root cause: `/token/refresh/` requires `{"refresh": "<token>"}` in the request body. Old interceptor sent an empty POST. Fixed by reading the stored refresh token from secure storage and including it in the POST body.
+
+---
+
+## 4. Files Created / Modified
+
+| File | Action |
+|---|---|
+| `lib/services/auth_storage.dart` | Created — secure token storage (4 functions) |
+| `lib/core/network/interceptors/auth_interceptor.dart` | Rewritten — Bearer injection + token-based refresh + clearTokens on failure |
+| `lib/core/network/api_client.dart` | Modified — removed `debugCookieJar` param |
+| `lib/core/constants/api_constants.dart` | Modified — `baseUrl` is now a getter backed by `flutter_dotenv` |
+| `lib/core/theme/app_typography.dart` | Modified — all text styles use `GoogleFonts.poppins()` |
+| `lib/core/theme/app_theme.dart` | Modified — font family + AppBar/button text styles use `GoogleFonts.poppins()` |
+| `lib/core/router/route_paths.dart` | Modified — added `settingsRolesPermissions` |
+| `lib/core/router/app_router.dart` | Modified — registered `RolesPermissionsPage` route |
+| `lib/features/auth/data/datasource/auth_remote_datasource.dart` | Modified — guarded `saveTokens` call after login |
+| `lib/features/settings/feature_module.dart` | Rewritten — organised exports per subfolder |
+| `lib/features/settings/presentation/pages/settings_page_types.dart` | Modified — `icon` extension + Roles & Permissions tile |
+| `lib/features/settings/presentation/widgets/settings_tab_bar.dart` | Modified — icon param + pill highlight animation |
+| `lib/features/settings/presentation/pages/roles_permissions/roles_permissions_page.dart` | Created |
+| `lib/features/settings/presentation/widgets/roles_permissions/permission_matrix_data.dart` | Created |
+| `lib/features/settings/presentation/widgets/roles_permissions/permission_cell.dart` | Created |
+| `lib/features/settings/presentation/widgets/roles_permissions/permissions_desktop_table.dart` | Created |
+| `lib/features/settings/presentation/widgets/roles_permissions/permissions_mobile_cards.dart` | Created |
+| `pages/departments/`, `pages/smtp/`, `pages/email_templates/` | Moved (git mv) — 4 page files |
+| `widgets/smtp/`, `widgets/email_templates/`, `widgets/departments/` | Moved (git mv) — 34 widget files |
+| `lib/main.dart` | Modified — `dotenv.load()` before `runApp()` |
+| `pubspec.yaml` | Modified — added `google_fonts`, `flutter_dotenv`; removed local font section; added `.env` asset |
+| `.env.example` | Created |
+| `.gitignore` | Modified — added `.env` |
+
+---
+
+## 5. Git
+
+**Branch:** `main`
+**Commit:** `9aa5ced` — _feat: auth token storage, Bearer injection, dotenv, roles & settings reorg_
+**Remote:** `https://github.com/pramodkunja/royal_hrms.git`
+**Status:** Pushed ✓
+
+---
+
+## 6. Architecture Standards Followed
+
+- Zero hardcoded colors — all `AppColors.*`
+- Zero hardcoded text styles — all `context.textTheme.*` or `GoogleFonts.poppins(...)`
+- No API calls inside widgets — all network via `AuthInterceptor` / notifiers
+- Repository returns domain entities only
+- Route strings use `RoutePaths` constants
+- Tokens stored in `flutter_secure_storage` — never in `SharedPreferences`
+- `.env` gitignored; `.env.example` committed for team onboarding
+- Feature-first folder structure maintained; all new settings modules in their own subfolder
