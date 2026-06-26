@@ -3,41 +3,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/storage_keys.dart';
 import 'secure_storage_service.dart';
 
-/// Persists and retrieves the JWT access/refresh token pair from secure
-/// storage. This is the single source of truth the network layer and
-/// session-aware UI consult to know whether a token exists.
+/// Tracks whether a user session is active. With cookie-based auth the
+/// actual JWT tokens live in HttpOnly cookies managed by the browser or
+/// the Dio cookie jar — this service only stores a simple boolean flag
+/// so the splash screen can decide whether to start authenticated without
+/// making a network call.
 class TokenStorageService {
   TokenStorageService(this._secureStorageService);
 
   final SecureStorageService _secureStorageService;
 
-  Future<void> saveTokens({
-    required String accessToken,
-    required String refreshToken,
-  }) async {
-    await _secureStorageService.write(
-      key: StorageKeys.accessToken,
-      value: accessToken,
-    );
-    await _secureStorageService.write(
-      key: StorageKeys.refreshToken,
-      value: refreshToken,
+  Future<void> setLoggedIn() {
+    return _secureStorageService.write(
+      key: StorageKeys.isLoggedIn,
+      value: 'true',
     );
   }
 
-  Future<String?> getAccessToken() {
-    return _secureStorageService.read(key: StorageKeys.accessToken);
+  Future<bool> isLoggedIn() async {
+    final value =
+        await _secureStorageService.read(key: StorageKeys.isLoggedIn);
+    return value == 'true';
   }
 
-  Future<String?> getRefreshToken() {
-    return _secureStorageService.read(key: StorageKeys.refreshToken);
-  }
-
-  Future<bool> hasAccessToken() async => (await getAccessToken()) != null;
-
-  Future<void> clearTokens() async {
-    await _secureStorageService.delete(key: StorageKeys.accessToken);
-    await _secureStorageService.delete(key: StorageKeys.refreshToken);
+  Future<void> clearLoggedIn() {
+    return _secureStorageService.delete(key: StorageKeys.isLoggedIn);
   }
 }
 

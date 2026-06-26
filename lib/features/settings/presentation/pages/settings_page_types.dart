@@ -15,6 +15,16 @@ extension SettingsFilterTabLabel on SettingsFilterTab {
       SettingsFilterTab.system => 'System',
     };
   }
+
+  IconData get icon {
+    return switch (this) {
+      SettingsFilterTab.all => Icons.tune_outlined,
+      SettingsFilterTab.company => Icons.business_outlined,
+      SettingsFilterTab.modules => Icons.extension_outlined,
+      SettingsFilterTab.communication => Icons.email_outlined,
+      SettingsFilterTab.system => Icons.dns_outlined,
+    };
+  }
 }
 
 class SettingsTileData {
@@ -60,6 +70,8 @@ const List<SettingsTileData> kAllSettingsTiles = [
     subtitle: 'Role-based access control for all users',
     accentColor: AppColors.emailCategoryDocument,
     tabs: {SettingsFilterTab.all, SettingsFilterTab.company},
+    routePath: RoutePaths.settingsRolesPermissions,
+    hasChevron: true,
   ),
   SettingsTileData(
     icon: Icons.event_note_outlined,

@@ -1,32 +1,23 @@
 import 'package:dio/dio.dart';
 
 import '../../constants/api_constants.dart';
-import '../../storage/token_storage_service.dart';
+import '../../../services/auth_storage.dart';
 
-/// Attaches the JWT access token to outgoing requests and prepares an
-/// automatic refresh-and-retry flow when a request fails with 401.
+/// Handles token injection and silent refresh for Bearer-token auth.
+///   1. Injects `Authorization: Bearer <token>` on every outgoing request.
+///   2. On a 401, reads the stored refresh token, POSTs it to the refresh
+///      endpoint, saves the new tokens, and retries the original request.
+///   3. Falls back to [onSessionExpired] and clears tokens on failure.
 class AuthInterceptor extends Interceptor {
   AuthInterceptor({
-    required TokenStorageService tokenStorageService,
     required Dio refreshDio,
     required Dio retryDio,
     this.onSessionExpired,
-  }) : _tokenStorageService = tokenStorageService,
-       _refreshDio = refreshDio,
-       _retryDio = retryDio;
+  })  : _refreshDio = refreshDio,
+        _retryDio = retryDio;
 
-  final TokenStorageService _tokenStorageService;
-
-  /// A bare [Dio] instance (no interceptors) used solely to call the
-  /// refresh-token endpoint, avoiding interceptor recursion.
   final Dio _refreshDio;
-
-  /// The application's main [Dio] instance, used to retry the original
-  /// request once a new access token has been obtained.
   final Dio _retryDio;
-
-  /// Invoked when the refresh token is missing/expired so the app can
-  /// clear the session and navigate back to the login screen.
   final Future<void> Function()? onSessionExpired;
 
   bool _isRefreshing = false;
@@ -36,10 +27,9 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final accessToken = await _tokenStorageService.getAccessToken();
-    if (accessToken != null) {
-      options.headers[ApiConstants.authorizationHeader] =
-          '${ApiConstants.bearerPrefix} $accessToken';
+    final token = await getAccessToken();
+    if (token != null && token.isNotEmpty) {
+      options.headers['Authorization'] = 'Bearer $token';
     }
     handler.next(options);
   }
@@ -59,21 +49,19 @@ class AuthInterceptor extends Interceptor {
 
     try {
       _isRefreshing = true;
-      final refreshedToken = await _refreshAccessToken();
-      if (refreshedToken == null) {
+      final refreshed = await _refreshAccessToken();
+      if (!refreshed) {
+        await clearTokens();
         await onSessionExpired?.call();
         handler.next(err);
         return;
       }
 
-      final retryOptions = err.requestOptions
-        ..headers[ApiConstants.authorizationHeader] =
-            '${ApiConstants.bearerPrefix} $refreshedToken'
-        ..extra['retried'] = true;
-
+      final retryOptions = err.requestOptions..extra['retried'] = true;
       final response = await _retryDio.fetch<dynamic>(retryOptions);
       handler.resolve(response);
     } catch (_) {
+      await clearTokens();
       await onSessionExpired?.call();
       handler.next(err);
     } finally {
@@ -81,23 +69,29 @@ class AuthInterceptor extends Interceptor {
     }
   }
 
-  Future<String?> _refreshAccessToken() async {
-    final refreshToken = await _tokenStorageService.getRefreshToken();
-    if (refreshToken == null) return null;
+  Future<bool> _refreshAccessToken() async {
+    try {
+      final storedRefresh = await getRefreshToken();
+      if (storedRefresh == null || storedRefresh.isEmpty) return false;
 
-    final response = await _refreshDio.post<Map<String, dynamic>>(
-      ApiConstants.refreshTokenEndpoint,
-      data: {'refresh_token': refreshToken},
-    );
+      final response = await _refreshDio.post<Map<String, dynamic>>(
+        ApiConstants.refreshTokenEndpoint,
+        data: {'refresh': storedRefresh},
+      );
 
-    final newAccessToken = response.data?['access_token'] as String?;
-    final newRefreshToken = response.data?['refresh_token'] as String?;
-    if (newAccessToken == null) return null;
+      final body = response.data;
+      final data = body?['data'] is Map
+          ? body!['data'] as Map<String, dynamic>
+          : <String, dynamic>{};
+      final newAccess = data['access'] as String? ?? '';
+      final newRefresh = data['refresh'] as String? ?? storedRefresh;
 
-    await _tokenStorageService.saveTokens(
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken ?? refreshToken,
-    );
-    return newAccessToken;
+      if (newAccess.isEmpty) return false;
+
+      await saveTokens(newAccess, newRefresh);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }

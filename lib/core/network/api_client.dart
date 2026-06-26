@@ -1,15 +1,21 @@
+import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../constants/api_constants.dart';
 import '../errors/exceptions.dart';
 import '../services/auth_status_notifier.dart';
 import '../services/logger_service.dart';
-import '../storage/token_storage_service.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/error_interceptor.dart';
 import 'interceptors/request_interceptor.dart';
 import 'interceptors/response_interceptor.dart';
+
+/// Default in-memory jar — overridden at startup in main.dart with a
+/// PersistCookieJar so mobile sessions survive app restarts.
+final cookieJarProvider = Provider<CookieJar>((ref) => CookieJar());
 
 BaseOptions _baseOptions() => BaseOptions(
   baseUrl: ApiConstants.baseUrl,
@@ -19,9 +25,6 @@ BaseOptions _baseOptions() => BaseOptions(
   contentType: ApiConstants.applicationJson,
 );
 
-/// Centralized HTTP client. All feature data sources talk to the API
-/// exclusively through this class rather than constructing their own
-/// [Dio] instance.
 class ApiClient {
   ApiClient(this._dio);
 
@@ -35,8 +38,8 @@ class ApiClient {
     Options? options,
   }) {
     return _guard(
-      () =>
-          _dio.get<T>(path, queryParameters: queryParameters, options: options),
+      () => _dio.get<T>(path,
+          queryParameters: queryParameters, options: options),
     );
   }
 
@@ -47,12 +50,8 @@ class ApiClient {
     Options? options,
   }) {
     return _guard(
-      () => _dio.post<T>(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      ),
+      () => _dio.post<T>(path,
+          data: data, queryParameters: queryParameters, options: options),
     );
   }
 
@@ -63,12 +62,8 @@ class ApiClient {
     Options? options,
   }) {
     return _guard(
-      () => _dio.put<T>(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      ),
+      () => _dio.put<T>(path,
+          data: data, queryParameters: queryParameters, options: options),
     );
   }
 
@@ -79,12 +74,8 @@ class ApiClient {
     Options? options,
   }) {
     return _guard(
-      () => _dio.patch<T>(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      ),
+      () => _dio.patch<T>(path,
+          data: data, queryParameters: queryParameters, options: options),
     );
   }
 
@@ -95,18 +86,11 @@ class ApiClient {
     Options? options,
   }) {
     return _guard(
-      () => _dio.delete<T>(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      ),
+      () => _dio.delete<T>(path,
+          data: data, queryParameters: queryParameters, options: options),
     );
   }
 
-  /// Routes every request through here so callers only ever see
-  /// [AppException] (see core/errors/exceptions.dart) and never a raw
-  /// [DioException], per the project's error-handling standard.
   Future<Response<T>> _guard<T>(Future<Response<T>> Function() request) async {
     try {
       return await request();
@@ -119,18 +103,36 @@ class ApiClient {
   }
 }
 
-/// Bare instance (no interceptors) reserved for the refresh-token call so
-/// the auth interceptor never recurses into itself.
-final refreshDioProvider = Provider<Dio>((ref) => Dio(_baseOptions()));
+/// Bare Dio used only for token-refresh calls. Shares the cookie jar so
+/// the royal_refresh_token cookie is included; has no AuthInterceptor to
+/// avoid recursion.
+final refreshDioProvider = Provider<Dio>((ref) {
+  final dio = Dio(_baseOptions());
+  if (!kIsWeb) {
+    dio.interceptors.add(CookieManager(ref.watch(cookieJarProvider)));
+  } else {
+    (dio.httpClientAdapter as dynamic).withCredentials = true;
+  }
+  return dio;
+});
 
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(_baseOptions());
   final logger = ref.watch(loggerServiceProvider);
 
+  if (!kIsWeb) {
+    // Mobile/desktop: CookieManager reads Set-Cookie from responses and
+    // injects Cookie headers into requests automatically.
+    dio.interceptors.add(CookieManager(ref.watch(cookieJarProvider)));
+  } else {
+    // Web: instruct the browser XHR adapter to include HttpOnly cookies
+    // in cross-origin requests (requires CORS Allow-Credentials on server).
+    (dio.httpClientAdapter as dynamic).withCredentials = true;
+  }
+
   dio.interceptors.addAll([
     RequestInterceptor(logger),
     AuthInterceptor(
-      tokenStorageService: ref.watch(tokenStorageServiceProvider),
       refreshDio: ref.watch(refreshDioProvider),
       retryDio: dio,
       onSessionExpired: () =>

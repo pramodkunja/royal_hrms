@@ -27,13 +27,15 @@ class SettingsTabBar extends StatelessWidget {
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: SettingsFilterTab.values.map((tab) {
             final isActive = tab == activeTab;
             return _TabItem(
               label: tab.label,
+              icon: tab.icon,
               isActive: isActive,
+              isDark: isDark,
               onTap: () => onTabChanged(tab),
             );
           }).toList(),
@@ -46,40 +48,57 @@ class SettingsTabBar extends StatelessWidget {
 class _TabItem extends StatelessWidget {
   const _TabItem({
     required this.label,
+    required this.icon,
     required this.isActive,
+    required this.isDark,
     required this.onTap,
   });
 
   final String label;
+  final IconData icon;
   final bool isActive;
+  final bool isDark;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.theme.brightness == Brightness.dark;
     const activeColor = AppColors.primary;
     final mutedColor =
         isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted;
+    final activeBg = isDark
+        ? AppColors.primary.withValues(alpha: 0.18)
+        : AppColors.primary.withValues(alpha: 0.10);
+
+    final foreground = isActive ? activeColor : mutedColor;
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 14),
-        margin: const EdgeInsets.only(right: 24),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeInOut,
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isActive ? activeColor : Colors.transparent,
-              width: 2,
-            ),
+          color: isActive ? activeBg : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isActive ? activeColor.withValues(alpha: 0.35) : Colors.transparent,
+            width: 1,
           ),
         ),
-        child: Text(
-          label,
-          style: context.textTheme.labelMedium?.copyWith(
-            color: isActive ? activeColor : mutedColor,
-            fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: foreground),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: context.textTheme.labelMedium?.copyWith(
+                color: foreground,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );

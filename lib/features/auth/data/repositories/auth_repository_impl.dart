@@ -1,4 +1,4 @@
-import '../../domain/entities/auth_session.dart';
+import '../../domain/entities/auth_user.dart';
 import '../../domain/entities/password_reset_challenge.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasource/auth_remote_datasource.dart';
@@ -9,15 +9,15 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
 
   @override
-  Future<AuthSession> login({
+  Future<AuthUser> login({
     required String email,
     required String password,
   }) async {
-    final response = await _remoteDataSource.login(
+    final model = await _remoteDataSource.login(
       email: email,
       password: password,
     );
-    return response.toEntity();
+    return model.toEntity();
   }
 
   @override

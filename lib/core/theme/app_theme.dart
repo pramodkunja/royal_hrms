@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 import 'app_typography.dart';
@@ -33,8 +34,7 @@ FilledButtonThemeData _filledButtonTheme() {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(_buttonRadius),
       ),
-      textStyle: const TextStyle(
-        fontFamily: AppTypography.fontFamily,
+      textStyle: GoogleFonts.poppins(
         fontWeight: FontWeight.w600,
         fontSize: 16,
       ),
@@ -58,17 +58,16 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      fontFamily: AppTypography.fontFamily,
+      fontFamily: GoogleFonts.poppins().fontFamily,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.lightBackground,
       textTheme: AppTypography.textTheme(AppColors.lightOnSurface),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.lightSurface,
         foregroundColor: AppColors.lightOnSurface,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(
-          fontFamily: AppTypography.fontFamily,
+        titleTextStyle: GoogleFonts.poppins(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.lightOnSurface,
@@ -106,17 +105,16 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      fontFamily: AppTypography.fontFamily,
+      fontFamily: GoogleFonts.poppins().fontFamily,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.darkBackground,
       textTheme: AppTypography.textTheme(AppColors.darkOnSurface),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.darkSurface,
         foregroundColor: AppColors.darkOnSurface,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(
-          fontFamily: AppTypography.fontFamily,
+        titleTextStyle: GoogleFonts.poppins(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.darkOnSurface,

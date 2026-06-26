@@ -1,8 +1,8 @@
-import '../entities/auth_session.dart';
+import '../entities/auth_user.dart';
 import '../entities/password_reset_challenge.dart';
 
 abstract class AuthRepository {
-  Future<AuthSession> login({required String email, required String password});
+  Future<AuthUser> login({required String email, required String password});
 
   Future<void> requestPasswordResetOtp({required String email});
 

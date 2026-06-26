@@ -9,10 +9,6 @@ import '../../../../core/storage/user_session_service.dart';
 import 'auth_providers.dart';
 import 'login_state.dart';
 
-/// Drives the login screen: validates nothing itself (the form already
-/// validated input before calling [submit]) and orchestrates the
-/// Domain → Data → session-persistence → auth-state sequence described
-/// in the mandatory feature workflow.
 class LoginController extends Notifier<LoginState> {
   @override
   LoginState build() => const LoginState();
@@ -21,42 +17,39 @@ class LoginController extends Notifier<LoginState> {
     state = const LoginState(status: LoginStatus.submitting);
 
     try {
-      final session = await ref
+      // Tokens are now delivered as HttpOnly cookies by the server.
+      // We only receive the user profile in the response body.
+      final user = await ref
           .read(loginUseCaseProvider)
           .execute(email: email, password: password);
 
-      await ref
-          .read(tokenStorageServiceProvider)
-          .saveTokens(
-            accessToken: session.accessToken,
-            refreshToken: session.refreshToken,
-          );
+      await ref.read(userSessionServiceProvider).saveSession(
+        UserSessionModel(
+          userId: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          roleDisplay: user.roleDisplay,
+          permissions: user.permissions,
+        ),
+      );
 
-      await ref
-          .read(userSessionServiceProvider)
-          .saveSession(
-            UserSessionModel(
-              userId: session.user.id,
-              name: session.user.name,
-              email: session.user.email,
-              role: session.user.role,
-              roleDisplay: session.user.roleDisplay,
-              permissions: session.user.permissions,
-            ),
-          );
+      // Persist a simple "logged in" flag used by the splash screen to
+      // avoid a network call on every cold start.
+      await ref.read(tokenStorageServiceProvider).setLoggedIn();
 
       ref.read(authStatusNotifierProvider.notifier).setAuthenticated();
-      // Force a re-fetch even if auth status was already `authenticated`
-      // (e.g. re-logging in as a different user without an intervening
-      // logout) — ref.watch alone only refires on a state *change*, so
-      // without this the drawer could keep showing the previous
-      // session's permissions.
       ref.invalidate(currentUserSessionProvider);
       state = const LoginState(status: LoginStatus.success);
     } on AppException catch (exception) {
       state = LoginState(
         status: LoginStatus.failure,
         failure: Failure.fromException(exception),
+      );
+    } catch (e) {
+      state = LoginState(
+        status: LoginStatus.failure,
+        failure: Failure.unknown('Something went wrong. Please try again.'),
       );
     }
   }

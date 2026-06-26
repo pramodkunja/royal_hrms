@@ -100,6 +100,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SettingsPage(),
       ),
       GoRoute(
+        path: RoutePaths.settingsRolesPermissions,
+        builder: (context, state) => const RolesPermissionsPage(),
+      ),
+      GoRoute(
         path: RoutePaths.smtpSettings,
         builder: (context, state) => const SmtpSettingsPage(),
       ),

@@ -47,6 +47,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<LoginState>(loginControllerProvider, (_, next) {
+      if (next.status == LoginStatus.success) {
+        context.go(RoutePaths.dashboard);
+      }
+    });
+
     final loginState = ref.watch(loginControllerProvider);
     final isSubmitting = loginState.status == LoginStatus.submitting;
 
